@@ -68,7 +68,7 @@ function scopeStyles(css: string, scope: string): string {
       // Split comma-separated selectors and prefix each
       const prefixed = trimmed
         .split(',')
-        .map((s) => {
+        .map((s: string) => {
           const sel = s.trim()
           // Don't prefix :root, html, body — map them to the scope container
           if (sel === ':root' || sel === 'html') return scope
