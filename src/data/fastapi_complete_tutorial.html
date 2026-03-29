@@ -1,0 +1,2583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FastAPI Complete Tutorial</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #0f1528;
+    --bg3: #141a30;
+    --panel: #1a2040;
+    --border: #2a3560;
+    --accent: #00d4ff;
+    --accent2: #7c4dff;
+    --accent3: #00ff94;
+    --warn: #ff6b35;
+    --text: #e8eaf6;
+    --text2: #8892b0;
+    --code-bg: #0d1117;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* SIDEBAR */
+  #sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    overflow-y: auto;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-track { background: transparent; }
+  #sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .sidebar-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg2);
+    z-index: 10;
+  }
+
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 14px; color: #fff;
+  }
+
+  .logo-text {
+    font-size: 18px; font-weight: 800;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .sidebar-subtitle { font-size: 11px; color: var(--text2); letter-spacing: 0.05em; text-transform: uppercase; }
+
+  .search-box {
+    margin-top: 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .search-box input {
+    background: none; border: none; outline: none;
+    color: var(--text); font-family: 'Sora', sans-serif;
+    font-size: 13px; width: 100%;
+  }
+
+  .search-box input::placeholder { color: var(--text2); }
+
+  #toc { padding: 12px 0; flex: 1; }
+
+  .toc-item {
+    padding: 8px 20px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text2);
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .toc-item:hover { color: var(--text); background: rgba(0,212,255,0.05); border-left-color: rgba(0,212,255,0.3); }
+  .toc-item.active { color: var(--accent); background: rgba(0,212,255,0.08); border-left-color: var(--accent); font-weight: 600; }
+
+  .toc-num {
+    font-size: 10px; font-weight: 700;
+    background: var(--panel); border-radius: 4px;
+    padding: 2px 5px; min-width: 24px;
+    text-align: center; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .toc-item.active .toc-num { background: rgba(0,212,255,0.2); color: var(--accent); }
+
+  /* MAIN CONTENT */
+  #main {
+    margin-left: 280px;
+    flex: 1;
+    max-width: calc(100vw - 280px);
+  }
+
+  .top-bar {
+    position: sticky; top: 0;
+    background: rgba(10,14,26,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    z-index: 50;
+  }
+
+  .breadcrumb { font-size: 13px; color: var(--text2); }
+  .breadcrumb span { color: var(--accent); }
+
+  .progress-wrap { display: flex; align-items: center; gap: 10px; }
+  .progress-bar { width: 120px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.4s; }
+  .progress-text { font-size: 12px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+
+  /* SECTIONS */
+  .section {
+    padding: 60px 48px;
+    border-bottom: 1px solid var(--border);
+    animation: fadeIn 0.4s ease;
+    max-width: 900px;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .section-header {
+    display: flex; align-items: flex-start; gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; font-weight: 700;
+    color: var(--accent2);
+    background: rgba(124,77,255,0.15);
+    border: 1px solid rgba(124,77,255,0.3);
+    padding: 4px 10px; border-radius: 6px;
+    white-space: nowrap; margin-top: 4px;
+  }
+
+  .section h2 {
+    font-size: 28px; font-weight: 800;
+    background: linear-gradient(90deg, #fff 60%, var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+  }
+
+  .section h3 {
+    font-size: 18px; font-weight: 700;
+    color: var(--accent);
+    margin: 28px 0 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .section h3::before { content: '▸'; color: var(--accent2); font-size: 14px; }
+
+  .section p {
+    color: var(--text2); line-height: 1.8; margin-bottom: 16px; font-size: 15px;
+  }
+
+  .section p strong { color: var(--text); font-weight: 600; }
+
+  /* CODE BLOCKS */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin: 16px 0;
+    overflow: hidden;
+  }
+
+  .code-header {
+    background: var(--panel);
+    padding: 10px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-lang {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent); font-family: 'JetBrains Mono', monospace;
+  }
+
+  .code-filename { font-size: 12px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+
+  .copy-btn {
+    background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.2);
+    color: var(--accent); border-radius: 6px; padding: 4px 10px;
+    font-size: 11px; cursor: pointer; font-family: 'Sora', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .copy-btn:hover { background: rgba(0,212,255,0.2); }
+  .copy-btn.copied { color: var(--accent3); border-color: rgba(0,255,148,0.3); background: rgba(0,255,148,0.1); }
+
+  pre {
+    padding: 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; line-height: 1.7;
+  }
+
+  pre::-webkit-scrollbar { height: 4px; }
+  pre::-webkit-scrollbar-track { background: transparent; }
+  pre::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* SYNTAX HIGHLIGHTING */
+  .kw { color: #ff79c6; }       /* keywords */
+  .fn { color: #50fa7b; }       /* functions */
+  .str { color: #f1fa8c; }      /* strings */
+  .cm { color: #6272a4; font-style: italic; } /* comments */
+  .num { color: #bd93f9; }      /* numbers */
+  .cls { color: #8be9fd; }      /* classes */
+  .dec { color: #ffb86c; }      /* decorators */
+  .imp { color: #ff5555; }      /* imports */
+
+  /* CALLOUTS */
+  .callout {
+    border-radius: 10px; padding: 16px 20px;
+    margin: 16px 0; display: flex; gap: 12px; align-items: flex-start;
+  }
+
+  .callout-info { background: rgba(0,212,255,0.07); border: 1px solid rgba(0,212,255,0.2); }
+  .callout-warn { background: rgba(255,107,53,0.07); border: 1px solid rgba(255,107,53,0.2); }
+  .callout-tip { background: rgba(0,255,148,0.07); border: 1px solid rgba(0,255,148,0.2); }
+
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout p { margin: 0; font-size: 14px; }
+  .callout-info p { color: #a8d8ea; }
+  .callout-warn p { color: #ffb8a0; }
+  .callout-tip p { color: #a0ffd4; }
+
+  /* TAGS */
+  .tag {
+    display: inline-block; padding: 2px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .tag-get { background: rgba(0,255,148,0.15); color: var(--accent3); border: 1px solid rgba(0,255,148,0.3); }
+  .tag-post { background: rgba(0,212,255,0.15); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+  .tag-put { background: rgba(255,179,0,0.15); color: #ffb300; border: 1px solid rgba(255,179,0,0.3); }
+  .tag-delete { background: rgba(255,107,53,0.15); color: var(--warn); border: 1px solid rgba(255,107,53,0.3); }
+  .tag-patch { background: rgba(124,77,255,0.15); color: var(--accent2); border: 1px solid rgba(124,77,255,0.3); }
+
+  /* INSTALL BOX */
+  .install-box {
+    background: var(--code-bg);
+    border: 1px solid var(--accent3);
+    border-radius: 10px; padding: 16px 20px; margin: 16px 0;
+    font-family: 'JetBrains Mono', monospace; font-size: 14px;
+    color: var(--accent3);
+  }
+
+  .install-box::before { content: '$ '; color: var(--text2); }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  th { background: var(--panel); padding: 10px 14px; text-align: left; font-size: 12px; color: var(--accent); border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; font-size: 13px; color: var(--text2); border-bottom: 1px solid rgba(42,53,96,0.5); }
+  tr:hover td { background: rgba(0,212,255,0.03); }
+
+  /* INLINE CODE */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--panel); border: 1px solid var(--border);
+    padding: 2px 7px; border-radius: 4px; font-size: 12px;
+    color: var(--accent);
+  }
+
+  /* NAV ARROWS */
+  .nav-arrows {
+    padding: 32px 48px;
+    display: flex; gap: 16px; justify-content: flex-end;
+    max-width: 900px;
+  }
+
+  .nav-btn {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--panel); border: 1px solid var(--border);
+    color: var(--text2); padding: 10px 20px; border-radius: 8px;
+    cursor: pointer; font-family: 'Sora', sans-serif; font-size: 13px;
+    transition: all 0.2s;
+  }
+
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.05); }
+
+  /* HERO */
+  .hero {
+    padding: 64px 48px 48px;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse at 0% 0%, rgba(0,212,255,0.05) 0%, transparent 60%),
+                radial-gradient(ellipse at 100% 100%, rgba(124,77,255,0.05) 0%, transparent 60%);
+  }
+
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(0,255,148,0.1); border: 1px solid rgba(0,255,148,0.2);
+    color: var(--accent3); padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin-bottom: 20px;
+  }
+
+  .hero h1 {
+    font-size: 48px; font-weight: 800; line-height: 1.1; margin-bottom: 16px;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent2) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .hero p { font-size: 17px; color: var(--text2); max-width: 600px; line-height: 1.7; margin-bottom: 24px; }
+
+  .hero-stats {
+    display: flex; gap: 32px; flex-wrap: wrap;
+  }
+
+  .stat { display: flex; flex-direction: column; gap: 2px; }
+  .stat-num { font-size: 24px; font-weight: 800; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+  .stat-label { font-size: 12px; color: var(--text2); }
+
+  /* RESPONSE EXAMPLE */
+  .response-box {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 20px; margin: 12px 0;
+    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  }
+
+  .response-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-bottom: 10px; font-size: 12px; font-weight: 700;
+  }
+
+  .status-200 { color: var(--accent3); }
+  .status-404 { color: var(--warn); }
+  .status-422 { color: #ffb300; }
+
+  /* FLOW DIAGRAM */
+  .flow {
+    display: flex; align-items: center; gap: 0;
+    margin: 20px 0; flex-wrap: wrap;
+  }
+
+  .flow-box {
+    background: var(--panel); border: 1px solid var(--border);
+    padding: 10px 16px; border-radius: 8px; font-size: 13px;
+    color: var(--text); white-space: nowrap;
+  }
+
+  .flow-arrow {
+    color: var(--accent2); font-size: 18px; padding: 0 8px;
+  }
+
+  .hidden { display: none; }
+
+  /* MOBILE */
+  @media (max-width: 768px) {
+    #sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+    #sidebar.open { transform: translateX(0); }
+    #main { margin-left: 0; max-width: 100vw; }
+    .section { padding: 40px 24px; }
+    .hero { padding: 40px 24px 32px; }
+    .hero h1 { font-size: 32px; }
+    .top-bar { padding: 14px 24px; }
+    .nav-arrows { padding: 24px; }
+    .hamburger { display: block !important; }
+  }
+
+  .hamburger {
+    display: none;
+    background: none; border: none; color: var(--text); cursor: pointer; font-size: 22px;
+  }
+
+  /* BACK TO TOP */
+  #back-top {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--accent2); color: #fff;
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px; box-shadow: 0 4px 20px rgba(124,77,255,0.4);
+    transition: all 0.2s; z-index: 200; opacity: 0;
+  }
+
+  #back-top.visible { opacity: 1; }
+  #back-top:hover { transform: translateY(-3px); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <div class="logo-icon">FA</div>
+      <span class="logo-text">FastAPI</span>
+    </div>
+    <div class="sidebar-subtitle">Complete Beginner's Guide</div>
+    <div class="search-box">
+      <span style="color:var(--text2);font-size:14px;">🔍</span>
+      <input type="text" placeholder="Search topics..." id="search-input">
+    </div>
+  </div>
+  <div id="toc"></div>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="top-bar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="breadcrumb">FastAPI &rsaquo; <span id="current-topic">Getting Started</span></div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+      <div class="progress-text" id="progress-text">0 / 35</div>
+    </div>
+  </div>
+
+  <div id="content"></div>
+
+  <div class="nav-arrows">
+    <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">← Previous</button>
+    <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next →</button>
+  </div>
+</div>
+
+<div id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
+
+<script>
+const topics = [
+  {
+    title: "Introduction",
+    content: `
+    <div class="hero">
+      <div class="hero-badge">⚡ The Fastest Way to Build APIs</div>
+      <h1>FastAPI Complete<br>Beginner's Guide</h1>
+      <p>Learn to build production-ready REST APIs with Python. This guide covers every topic from the official FastAPI tutorial — explained simply, with real code examples you can run immediately.</p>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-num">35</span><span class="stat-label">Topics Covered</span></div>
+        <div class="stat"><span class="stat-num">100+</span><span class="stat-label">Code Examples</span></div>
+        <div class="stat"><span class="stat-num">0</span><span class="stat-label">Prior API Knowledge Needed</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <div class="section-num">INTRO</div>
+        <h2>What is FastAPI?</h2>
+      </div>
+      <p>FastAPI is a modern Python framework for building APIs (Application Programming Interfaces). Think of an API as a waiter in a restaurant — you (the client) give your order (request) to the waiter (API), the waiter takes it to the kitchen (server/database), and brings back your food (response).</p>
+      <h3>Why FastAPI?</h3>
+      <table>
+        <tr><th>Feature</th><th>What it means</th></tr>
+        <tr><td>⚡ Fast</td><td>One of the fastest Python frameworks — as fast as Node.js</td></tr>
+        <tr><td>📝 Auto Docs</td><td>Creates interactive API documentation automatically</td></tr>
+        <tr><td>🔒 Type Safety</td><td>Uses Python type hints to catch bugs early</td></tr>
+        <tr><td>✅ Validation</td><td>Automatically validates incoming data</td></tr>
+        <tr><td>🐍 Modern Python</td><td>Uses Python 3.7+ features</td></tr>
+      </table>
+      <h3>Installation</h3>
+      <p>Open your terminal and run these commands:</p>
+      <div class="install-box">pip install fastapi uvicorn[standard]</div>
+      <div class="callout callout-info">
+        <div class="callout-icon">ℹ️</div>
+        <p><strong>uvicorn</strong> is the server that runs your FastAPI app. Think of it like the engine that powers your API.</p>
+      </div>
+      <h3>How to run your app</h3>
+      <div class="install-box">uvicorn main:app --reload</div>
+      <p>This means: "Run the <code>app</code> object inside <code>main.py</code>, and auto-reload when I change the code."</p>
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p>Once running, visit <strong>http://127.0.0.1:8000/docs</strong> to see your interactive API documentation — automatically generated!</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "1. First Steps",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">01</div>
+        <h2>First Steps</h2>
+      </div>
+      <p>Let's write your very first FastAPI application. Create a file called <code>main.py</code>:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>
+
+<span class="cm"># Step 1: Create the FastAPI "app"</span>
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># Step 2: Create a route — a URL path your app responds to</span>
+<span class="dec">@app.get</span>(<span class="str">"/"</span>)
+<span class="kw">def</span> <span class="fn">read_root</span>():
+    <span class="kw">return</span> {<span class="str">"message"</span>: <span class="str">"Hello World"</span>}
+
+<span class="cm"># Step 3: Another route</span>
+<span class="dec">@app.get</span>(<span class="str">"/about"</span>)
+<span class="kw">def</span> <span class="fn">about</span>():
+    <span class="kw">return</span> {<span class="str">"app"</span>: <span class="str">"My First FastAPI"</span>, <span class="str">"version"</span>: <span class="str">"1.0"</span>}</pre>
+      </div>
+      <h3>Understanding the code</h3>
+      <table>
+        <tr><th>Part</th><th>What it does</th></tr>
+        <tr><td><code>from fastapi import FastAPI</code></td><td>Import the FastAPI class</td></tr>
+        <tr><td><code>app = FastAPI()</code></td><td>Create your application instance</td></tr>
+        <tr><td><code>@app.get("/")</code></td><td>A decorator — tells FastAPI "when someone visits /, run this function"</td></tr>
+        <tr><td><code>def read_root():</code></td><td>The function that handles the request</td></tr>
+        <tr><td><code>return {...}</code></td><td>FastAPI automatically converts this dict to JSON</td></tr>
+      </table>
+      <h3>HTTP Methods — the verbs of the web</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+        <span class="tag tag-get">GET</span> <span style="color:var(--text2);font-size:13px;align-self:center">Read data</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+        <span class="tag tag-post">POST</span> <span style="color:var(--text2);font-size:13px;align-self:center">Create new data</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+        <span class="tag tag-put">PUT</span> <span style="color:var(--text2);font-size:13px;align-self:center">Update/replace data</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+        <span class="tag tag-delete">DELETE</span> <span style="color:var(--text2);font-size:13px;align-self:center">Remove data</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+        <span class="tag tag-patch">PATCH</span> <span style="color:var(--text2);font-size:13px;align-self:center">Partially update data</span>
+      </div>
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p>After running, visit <strong>http://127.0.0.1:8000/docs</strong> — you'll see a beautiful UI where you can test your API right in the browser!</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "2. Path Parameters",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">02</div>
+        <h2>Path Parameters</h2>
+      </div>
+      <p>Path parameters let you capture parts of the URL. For example, <code>/users/42</code> — where <code>42</code> is the user's ID.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># {item_id} is a path parameter — captured from the URL</span>
+<span class="dec">@app.get</span>(<span class="str">"/items/{item_id}"</span>)
+<span class="kw">def</span> <span class="fn">get_item</span>(item_id: <span class="cls">int</span>):
+    <span class="kw">return</span> {<span class="str">"item_id"</span>: item_id}
+
+<span class="cm"># String path parameter</span>
+<span class="dec">@app.get</span>(<span class="str">"/users/{username}"</span>)
+<span class="kw">def</span> <span class="fn">get_user</span>(username: <span class="cls">str</span>):
+    <span class="kw">return</span> {<span class="str">"user"</span>: username}
+
+<span class="cm"># Using Enum for fixed valid values</span>
+<span class="imp">from</span> <span class="cls">enum</span> <span class="imp">import</span> <span class="cls">Enum</span>
+
+<span class="kw">class</span> <span class="cls">Category</span>(<span class="cls">str</span>, <span class="cls">Enum</span>):
+    phones = <span class="str">"phones"</span>
+    laptops = <span class="str">"laptops"</span>
+    tablets = <span class="str">"tablets"</span>
+
+<span class="dec">@app.get</span>(<span class="str">"/products/{category}"</span>)
+<span class="kw">def</span> <span class="fn">get_products</span>(category: <span class="cls">Category</span>):
+    <span class="kw">return</span> {<span class="str">"category"</span>: category, <span class="str">"items"</span>: []}
+
+<span class="cm"># File path parameter (handles slashes in path)</span>
+<span class="dec">@app.get</span>(<span class="str">"/files/{file_path:path}"</span>)
+<span class="kw">def</span> <span class="fn">read_file</span>(file_path: <span class="cls">str</span>):
+    <span class="kw">return</span> {<span class="str">"file_path"</span>: file_path}</pre>
+      </div>
+      <h3>What happens with types?</h3>
+      <p>When you write <code>item_id: int</code>, FastAPI automatically:</p>
+      <div class="flow">
+        <div class="flow-box">URL: /items/42</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Converts "42" to int</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Validates it's a number</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Passes to function</div>
+      </div>
+      <div class="callout callout-warn">
+        <div class="callout-icon">⚠️</div>
+        <p>Order matters! Put fixed routes BEFORE dynamic ones. <code>/users/me</code> must come before <code>/users/{user_id}</code> or "me" will be treated as an ID.</p>
+      </div>
+      <h3>Try it</h3>
+      <table>
+        <tr><th>URL</th><th>Response</th></tr>
+        <tr><td>GET /items/5</td><td>{"item_id": 5}</td></tr>
+        <tr><td>GET /items/abc</td><td>422 Error — "abc" is not an int</td></tr>
+        <tr><td>GET /products/phones</td><td>{"category": "phones", "items": []}</td></tr>
+        <tr><td>GET /products/cars</td><td>422 Error — "cars" not in Enum</td></tr>
+      </table>
+    </div>`
+  },
+  {
+    title: "3. Query Parameters",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">03</div>
+        <h2>Query Parameters</h2>
+      </div>
+      <p>Query parameters come after the <code>?</code> in a URL: <code>/items?skip=0&limit=10</code>. They are optional filters or options you pass to your API.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>
+
+app = <span class="cls">FastAPI</span>()
+
+fake_db = [
+    {<span class="str">"name"</span>: <span class="str">"Apple"</span>}, {<span class="str">"name"</span>: <span class="str">"Banana"</span>},
+    {<span class="str">"name"</span>: <span class="str">"Cherry"</span>}, {<span class="str">"name"</span>: <span class="str">"Durian"</span>},
+]
+
+<span class="cm"># skip and limit are query params (not in URL path)</span>
+<span class="dec">@app.get</span>(<span class="str">"/items/"</span>)
+<span class="kw">def</span> <span class="fn">list_items</span>(skip: <span class="cls">int</span> = <span class="num">0</span>, limit: <span class="cls">int</span> = <span class="num">10</span>):
+    <span class="kw">return</span> fake_db[skip : skip + limit]
+
+<span class="cm"># Optional query parameter (may or may not be provided)</span>
+<span class="dec">@app.get</span>(<span class="str">"/search/"</span>)
+<span class="kw">def</span> <span class="fn">search</span>(q: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="kw">None</span>):
+    <span class="kw">if</span> q:
+        results = [i <span class="kw">for</span> i <span class="kw">in</span> fake_db <span class="kw">if</span> q.lower() <span class="kw">in</span> i[<span class="str">"name"</span>].lower()]
+        <span class="kw">return</span> {<span class="str">"results"</span>: results}
+    <span class="kw">return</span> {<span class="str">"results"</span>: fake_db}
+
+<span class="cm"># Mix of path + query parameters</span>
+<span class="dec">@app.get</span>(<span class="str">"/users/{user_id}/items"</span>)
+<span class="kw">def</span> <span class="fn">user_items</span>(user_id: <span class="cls">int</span>, active: <span class="cls">bool</span> = <span class="kw">True</span>):
+    <span class="kw">return</span> {<span class="str">"user_id"</span>: user_id, <span class="str">"active"</span>: active}</pre>
+      </div>
+      <h3>Default values</h3>
+      <table>
+        <tr><th>Parameter definition</th><th>Meaning</th></tr>
+        <tr><td><code>skip: int = 0</code></td><td>Optional, defaults to 0</td></tr>
+        <tr><td><code>q: Optional[str] = None</code></td><td>Optional, defaults to None (not required)</td></tr>
+        <tr><td><code>name: str</code></td><td>Required — must be provided</td></tr>
+      </table>
+      <h3>How FastAPI knows the difference</h3>
+      <div class="callout callout-info">
+        <div class="callout-icon">ℹ️</div>
+        <p>If a parameter is in <code>{curly braces}</code> in the path → it's a <strong>path parameter</strong>. If it's only in the function signature → it's a <strong>query parameter</strong>.</p>
+      </div>
+      <h3>Try it</h3>
+      <table>
+        <tr><th>URL</th><th>What it does</th></tr>
+        <tr><td>GET /items/</td><td>Returns all items (skip=0, limit=10)</td></tr>
+        <tr><td>GET /items/?skip=2&limit=2</td><td>Returns items 2 and 3</td></tr>
+        <tr><td>GET /search/?q=an</td><td>Returns Banana</td></tr>
+        <tr><td>GET /search/</td><td>Returns all items</td></tr>
+      </table>
+    </div>`
+  },
+  {
+    title: "4. Request Body",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">04</div>
+        <h2>Request Body</h2>
+      </div>
+      <p>A request body is data your client (browser, mobile app) sends TO your API. For example, when creating a new product, you send the product details. We use <strong>Pydantic models</strong> to define what this data should look like.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>
+<span class="imp">from</span> <span class="cls">pydantic</span> <span class="imp">import</span> <span class="cls">BaseModel</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># Define the shape of incoming data using a Pydantic model</span>
+<span class="kw">class</span> <span class="cls">Item</span>(<span class="cls">BaseModel</span>):
+    name: <span class="cls">str</span>               <span class="cm"># required field</span>
+    description: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="kw">None</span>  <span class="cm"># optional field</span>
+    price: <span class="cls">float</span>             <span class="cm"># required field</span>
+    tax: <span class="cls">Optional</span>[<span class="cls">float</span>] = <span class="kw">None</span>     <span class="cm"># optional field</span>
+
+<span class="cm"># POST = Create a new item</span>
+<span class="dec">@app.post</span>(<span class="str">"/items/"</span>)
+<span class="kw">def</span> <span class="fn">create_item</span>(item: <span class="cls">Item</span>):
+    <span class="cm"># Access fields with dot notation</span>
+    total = item.price
+    <span class="kw">if</span> item.tax:
+        total = item.price + item.tax
+    <span class="kw">return</span> {<span class="str">"name"</span>: item.name, <span class="str">"total_price"</span>: total}
+
+<span class="cm"># Mix path param + request body</span>
+<span class="dec">@app.put</span>(<span class="str">"/items/{item_id}"</span>)
+<span class="kw">def</span> <span class="fn">update_item</span>(item_id: <span class="cls">int</span>, item: <span class="cls">Item</span>):
+    <span class="kw">return</span> {<span class="str">"item_id"</span>: item_id, <span class="str">"item"</span>: item}</pre>
+      </div>
+      <h3>What to send (JSON)</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">json</span><span class="code-filename">Request Body</span></div>
+        <pre>{
+  <span class="str">"name"</span>: <span class="str">"Laptop"</span>,
+  <span class="str">"description"</span>: <span class="str">"A powerful laptop"</span>,
+  <span class="str">"price"</span>: <span class="num">999.99</span>,
+  <span class="str">"tax"</span>: <span class="num">89.99</span>
+}</pre>
+      </div>
+      <h3>What FastAPI does automatically</h3>
+      <p>1. Reads the JSON from the request body<br>
+      2. Converts types (e.g. "999.99" string → float)<br>
+      3. Validates required fields exist<br>
+      4. If invalid, returns a 422 error with details<br>
+      5. Gives you the data as a Python object</p>
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p><strong>Pydantic models</strong> are Python classes that describe the shape and types of your data. They come from the <code>pydantic</code> library which FastAPI uses internally.</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "5. Query String Validations",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">05</div>
+        <h2>Query Parameters &amp; String Validations</h2>
+      </div>
+      <p>You can add validation rules to query parameters using <code>Query()</code> — like minimum/maximum length, regex patterns, and more.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">Query</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>, <span class="cls">List</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="dec">@app.get</span>(<span class="str">"/items/"</span>)
+<span class="kw">def</span> <span class="fn">search_items</span>(
+    q: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="cls">Query</span>(
+        default=<span class="kw">None</span>,
+        min_length=<span class="num">3</span>,       <span class="cm"># minimum 3 characters</span>
+        max_length=<span class="num">50</span>,      <span class="cm"># maximum 50 characters</span>
+        title=<span class="str">"Search Query"</span>,
+        description=<span class="str">"Query string to search items"</span>
+    )
+):
+    <span class="kw">return</span> {<span class="str">"q"</span>: q}
+
+<span class="cm"># Required query parameter (no default)</span>
+<span class="dec">@app.get</span>(<span class="str">"/required/"</span>)
+<span class="kw">def</span> <span class="fn">required_param</span>(
+    q: <span class="cls">str</span> = <span class="cls">Query</span>(min_length=<span class="num">3</span>)  <span class="cm"># required + validated</span>
+):
+    <span class="kw">return</span> {<span class="str">"q"</span>: q}
+
+<span class="cm"># Query parameter that accepts multiple values</span>
+<span class="dec">@app.get</span>(<span class="str">"/multi/"</span>)
+<span class="kw">def</span> <span class="fn">multi_values</span>(
+    tags: <span class="cls">List</span>[<span class="cls">str</span>] = <span class="cls">Query</span>(default=[])
+):
+    <span class="cm"># URL: /multi/?tags=python&tags=fastapi</span>
+    <span class="kw">return</span> {<span class="str">"tags"</span>: tags}
+
+<span class="cm"># Deprecated parameter — shown in docs as deprecated</span>
+<span class="dec">@app.get</span>(<span class="str">"/old/"</span>)
+<span class="kw">def</span> <span class="fn">old_endpoint</span>(
+    q: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="cls">Query</span>(default=<span class="kw">None</span>, deprecated=<span class="kw">True</span>)
+):
+    <span class="kw">return</span> {<span class="str">"q"</span>: q}</pre>
+      </div>
+      <h3>Query() options</h3>
+      <table>
+        <tr><th>Option</th><th>Example</th><th>What it does</th></tr>
+        <tr><td>default</td><td><code>default=None</code></td><td>Default value (None = optional)</td></tr>
+        <tr><td>min_length</td><td><code>min_length=3</code></td><td>Minimum string length</td></tr>
+        <tr><td>max_length</td><td><code>max_length=50</code></td><td>Maximum string length</td></tr>
+        <tr><td>pattern</td><td><code>pattern="^[a-z]+$"</code></td><td>Must match regex</td></tr>
+        <tr><td>title</td><td><code>title="Search"</code></td><td>Label in API docs</td></tr>
+        <tr><td>description</td><td><code>description="..."</code></td><td>Description in API docs</td></tr>
+        <tr><td>deprecated</td><td><code>deprecated=True</code></td><td>Marks as deprecated in docs</td></tr>
+      </table>
+    </div>`
+  },
+  {
+    title: "6. Path Parameter Validations",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">06</div>
+        <h2>Path Parameters &amp; Numeric Validations</h2>
+      </div>
+      <p>Just like <code>Query()</code> for query params, use <code>Path()</code> to add validation and metadata to path parameters.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">Path</span>, <span class="cls">Query</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="dec">@app.get</span>(<span class="str">"/items/{item_id}"</span>)
+<span class="kw">def</span> <span class="fn">get_item</span>(
+    item_id: <span class="cls">int</span> = <span class="cls">Path</span>(
+        title=<span class="str">"The ID of the item"</span>,
+        ge=<span class="num">1</span>,       <span class="cm"># greater than or equal to 1</span>
+        le=<span class="num">1000</span>     <span class="cm"># less than or equal to 1000</span>
+    ),
+    q: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="kw">None</span>
+):
+    result = {<span class="str">"item_id"</span>: item_id}
+    <span class="kw">if</span> q:
+        result[<span class="str">"q"</span>] = q
+    <span class="kw">return</span> result
+
+<span class="cm"># Float validations</span>
+<span class="dec">@app.get</span>(<span class="str">"/products/{product_id}"</span>)
+<span class="kw">def</span> <span class="fn">get_product</span>(
+    product_id: <span class="cls">int</span> = <span class="cls">Path</span>(ge=<span class="num">1</span>),
+    price: <span class="cls">float</span> = <span class="cls">Query</span>(gt=<span class="num">0</span>, lt=<span class="num">10000</span>)  <span class="cm"># 0 < price < 10000</span>
+):
+    <span class="kw">return</span> {<span class="str">"product_id"</span>: product_id, <span class="str">"price"</span>: price}</pre>
+      </div>
+      <h3>Numeric validation options</h3>
+      <table>
+        <tr><th>Option</th><th>Meaning</th><th>Example</th></tr>
+        <tr><td><code>ge</code></td><td>Greater than or Equal (≥)</td><td><code>ge=1</code> means value ≥ 1</td></tr>
+        <tr><td><code>gt</code></td><td>Greater Than (&gt;)</td><td><code>gt=0</code> means value &gt; 0</td></tr>
+        <tr><td><code>le</code></td><td>Less than or Equal (≤)</td><td><code>le=100</code> means value ≤ 100</td></tr>
+        <tr><td><code>lt</code></td><td>Less Than (&lt;)</td><td><code>lt=1000</code> means value &lt; 1000</td></tr>
+        <tr><td><code>multiple_of</code></td><td>Must be a multiple</td><td><code>multiple_of=5</code></td></tr>
+      </table>
+      <div class="callout callout-info">
+        <div class="callout-icon">ℹ️</div>
+        <p>Path parameters are always <strong>required</strong> (they're part of the URL). You can't make them optional. But you can validate what values are acceptable.</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "7. Query Parameter Models",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">07</div>
+        <h2>Query Parameter Models</h2>
+      </div>
+      <p>When you have many related query parameters, group them into a Pydantic model instead of listing them one by one. Cleaner and reusable!</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>
+<span class="imp">from</span> <span class="cls">pydantic</span> <span class="imp">import</span> <span class="cls">BaseModel</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>
+<span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">Query</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Annotated</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># Group all filter parameters in one model</span>
+<span class="kw">class</span> <span class="cls">FilterParams</span>(<span class="cls">BaseModel</span>):
+    limit: <span class="cls">int</span> = <span class="num">100</span>
+    offset: <span class="cls">int</span> = <span class="num">0</span>
+    order_by: <span class="cls">str</span> = <span class="str">"id"</span>
+    tags: <span class="cls">list</span>[<span class="cls">str</span>] = []
+
+<span class="dec">@app.get</span>(<span class="str">"/items/"</span>)
+<span class="kw">def</span> <span class="fn">list_items</span>(
+    filter_query: <span class="cls">Annotated</span>[<span class="cls">FilterParams</span>, <span class="cls">Query</span>()]
+):
+    <span class="kw">return</span> filter_query
+
+<span class="cm"># URL: /items/?limit=10&offset=5&order_by=name&tags=python&tags=web</span></pre>
+      </div>
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p><code>Annotated[FilterParams, Query()]</code> tells FastAPI: "Treat all fields of FilterParams as query parameters." This is a Python 3.9+ pattern. For older Python, use <code>from typing import Annotated</code>.</p>
+      </div>
+      <h3>Benefits</h3>
+      <table>
+        <tr><th>Without Model</th><th>With Model</th></tr>
+        <tr><td>List every param separately</td><td>Define once, use anywhere</td></tr>
+        <tr><td>Hard to reuse</td><td>Import and reuse across routes</td></tr>
+        <tr><td>Gets messy fast</td><td>Clean, organized</td></tr>
+      </table>
+    </div>`
+  },
+  {
+    title: "8. Body - Multiple Parameters",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">08</div>
+        <h2>Body — Multiple Parameters</h2>
+      </div>
+      <p>You can mix path params, query params, and multiple body parameters in one endpoint.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">Body</span>
+<span class="imp">from</span> <span class="cls">pydantic</span> <span class="imp">import</span> <span class="cls">BaseModel</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="kw">class</span> <span class="cls">Item</span>(<span class="cls">BaseModel</span>):
+    name: <span class="cls">str</span>
+    price: <span class="cls">float</span>
+
+<span class="kw">class</span> <span class="cls">User</span>(<span class="cls">BaseModel</span>):
+    username: <span class="cls">str</span>
+    email: <span class="cls">str</span>
+
+<span class="cm"># Two body models — FastAPI expects nested JSON</span>
+<span class="dec">@app.put</span>(<span class="str">"/items/{item_id}"</span>)
+<span class="kw">def</span> <span class="fn">update_item</span>(
+    item_id: <span class="cls">int</span>,
+    item: <span class="cls">Item</span>,       <span class="cm"># body field "item"</span>
+    user: <span class="cls">User</span>        <span class="cm"># body field "user"</span>
+):
+    <span class="kw">return</span> {<span class="str">"item"</span>: item, <span class="str">"user"</span>: user, <span class="str">"id"</span>: item_id}
+
+<span class="cm"># Expected JSON:
+# {
+#   "item": {"name": "Laptop", "price": 999},
+#   "user": {"username": "john", "email": "john@example.com"}
+# }</span>
+
+<span class="cm"># Adding a single body value with Body()</span>
+<span class="dec">@app.post</span>(<span class="str">"/items/rated"</span>)
+<span class="kw">def</span> <span class="fn">create_rated_item</span>(
+    item: <span class="cls">Item</span>,
+    rating: <span class="cls">int</span> = <span class="cls">Body</span>(gt=<span class="num">0</span>, le=<span class="num">5</span>)  <span class="cm"># single value in body</span>
+):
+    <span class="kw">return</span> {<span class="str">"item"</span>: item, <span class="str">"rating"</span>: rating}
+
+<span class="cm"># embed=True forces a single model to be nested
+# Expected: {"item": {"name": "...", "price": ...}}  (not {"name":..., "price":...})</span>
+<span class="dec">@app.post</span>(<span class="str">"/embed/"</span>)
+<span class="kw">def</span> <span class="fn">embed_item</span>(item: <span class="cls">Item</span> = <span class="cls">Body</span>(embed=<span class="kw">True</span>)):
+    <span class="kw">return</span> {<span class="str">"item"</span>: item}</pre>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-icon">ℹ️</div>
+        <p>When you have <strong>multiple body models</strong>, FastAPI uses each model's name as the key in the JSON. When there's only <strong>one model</strong>, it expects the fields directly (unless you use <code>embed=True</code>).</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "9. Body - Fields",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">09</div>
+        <h2>Body — Fields</h2>
+      </div>
+      <p>Use <code>Field()</code> inside Pydantic models to add validation and metadata to individual fields — just like <code>Query()</code> and <code>Path()</code> for parameters.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>
+<span class="imp">from</span> <span class="cls">pydantic</span> <span class="imp">import</span> <span class="cls">BaseModel</span>, <span class="cls">Field</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="kw">class</span> <span class="cls">Item</span>(<span class="cls">BaseModel</span>):
+    name: <span class="cls">str</span> = <span class="cls">Field</span>(
+        min_length=<span class="num">1</span>,
+        max_length=<span class="num">100</span>,
+        title=<span class="str">"Item Name"</span>,
+        description=<span class="str">"The name of the item"</span>,
+        examples=[<span class="str">"Foo"</span>, <span class="str">"Bar"</span>]
+    )
+    description: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="cls">Field</span>(
+        default=<span class="kw">None</span>,
+        max_length=<span class="num">300</span>
+    )
+    price: <span class="cls">float</span> = <span class="cls">Field</span>(
+        gt=<span class="num">0</span>,
+        description=<span class="str">"Price must be greater than zero"</span>
+    )
+    quantity: <span class="cls">int</span> = <span class="cls">Field</span>(
+        default=<span class="num">1</span>,
+        ge=<span class="num">0</span>,
+        le=<span class="num">9999</span>
+    )
+
+<span class="dec">@app.post</span>(<span class="str">"/items/"</span>)
+<span class="kw">def</span> <span class="fn">create_item</span>(item: <span class="cls">Item</span>):
+    <span class="kw">return</span> item</pre>
+      </div>
+      <h3>Field() vs Query() vs Path()</h3>
+      <table>
+        <tr><th>Function</th><th>Used for</th><th>Location</th></tr>
+        <tr><td><code>Field()</code></td><td>Model attributes (inside Pydantic class)</td><td>Request body</td></tr>
+        <tr><td><code>Query()</code></td><td>Function parameters</td><td>URL query string</td></tr>
+        <tr><td><code>Path()</code></td><td>Function parameters</td><td>URL path</td></tr>
+      </table>
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p><code>Field()</code> supports all the same validation options as <code>Query()</code>: <code>ge</code>, <code>gt</code>, <code>le</code>, <code>lt</code>, <code>min_length</code>, <code>max_length</code>, <code>pattern</code>, etc.</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "10. Body - Nested Models",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">10</div>
+        <h2>Body — Nested Models</h2>
+      </div>
+      <p>Real data is rarely flat. FastAPI allows deeply nested models — models inside models, lists of models, and more.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>
+<span class="imp">from</span> <span class="cls">pydantic</span> <span class="imp">import</span> <span class="cls">BaseModel</span>, <span class="cls">HttpUrl</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>, <span class="cls">List</span>, <span class="cls">Set</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># Nested model</span>
+<span class="kw">class</span> <span class="cls">Image</span>(<span class="cls">BaseModel</span>):
+    url: <span class="cls">HttpUrl</span>   <span class="cm"># validates it's a valid URL</span>
+    name: <span class="cls">str</span>
+
+<span class="kw">class</span> <span class="cls">Item</span>(<span class="cls">BaseModel</span>):
+    name: <span class="cls">str</span>
+    price: <span class="cls">float</span>
+    tags: <span class="cls">List</span>[<span class="cls">str</span>] = []          <span class="cm"># list of strings</span>
+    unique_tags: <span class="cls">Set</span>[<span class="cls">str</span>] = set()  <span class="cm"># set (no duplicates)</span>
+    image: <span class="cls">Optional</span>[<span class="cls">Image</span>] = <span class="kw">None</span> <span class="cm"># nested model</span>
+    images: <span class="cls">List</span>[<span class="cls">Image</span>] = []       <span class="cm"># list of nested models</span>
+
+<span class="dec">@app.post</span>(<span class="str">"/items/"</span>)
+<span class="kw">def</span> <span class="fn">create_item</span>(item: <span class="cls">Item</span>):
+    <span class="kw">return</span> item</pre>
+      </div>
+      <h3>Example JSON request</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">json</span><span class="code-filename">Request Body</span></div>
+        <pre>{
+  <span class="str">"name"</span>: <span class="str">"Camera"</span>,
+  <span class="str">"price"</span>: <span class="num">499.99</span>,
+  <span class="str">"tags"</span>: [<span class="str">"electronics"</span>, <span class="str">"photo"</span>],
+  <span class="str">"image"</span>: {
+    <span class="str">"url"</span>: <span class="str">"https://example.com/camera.jpg"</span>,
+    <span class="str">"name"</span>: <span class="str">"Camera Front View"</span>
+  }
+}</pre>
+      </div>
+      <h3>Special types</h3>
+      <table>
+        <tr><th>Type</th><th>Description</th></tr>
+        <tr><td><code>HttpUrl</code></td><td>Validates URL format</td></tr>
+        <tr><td><code>EmailStr</code></td><td>Validates email format (needs pydantic[email])</td></tr>
+        <tr><td><code>Set[str]</code></td><td>List with no duplicates, converted to set</td></tr>
+        <tr><td><code>List[ModelClass]</code></td><td>List of nested objects</td></tr>
+        <tr><td><code>Dict[str, int]</code></td><td>Dictionary with typed keys and values</td></tr>
+      </table>
+    </div>`
+  },
+  {
+    title: "11. Request Example Data",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">11</div>
+        <h2>Declare Request Example Data</h2>
+      </div>
+      <p>Show example data in the auto-generated docs to make your API easier for others to understand and test.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">Body</span>
+<span class="imp">from</span> <span class="cls">pydantic</span> <span class="imp">import</span> <span class="cls">BaseModel</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Annotated</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># Method 1: Examples in the Pydantic model</span>
+<span class="kw">class</span> <span class="cls">Item</span>(<span class="cls">BaseModel</span>):
+    name: <span class="cls">str</span>
+    price: <span class="cls">float</span>
+
+    <span class="kw">class</span> <span class="cls">Config</span>:
+        json_schema_extra = {
+            <span class="str">"examples"</span>: [
+                {
+                    <span class="str">"name"</span>: <span class="str">"Laptop"</span>,
+                    <span class="str">"price"</span>: <span class="num">999.99</span>
+                }
+            ]
+        }
+
+<span class="cm"># Method 2: Examples in the endpoint with Body()</span>
+<span class="dec">@app.post</span>(<span class="str">"/items/"</span>)
+<span class="kw">def</span> <span class="fn">create_item</span>(
+    item: <span class="cls">Annotated</span>[
+        <span class="cls">Item</span>,
+        <span class="cls">Body</span>(
+            examples=[
+                {
+                    <span class="str">"name"</span>: <span class="str">"Phone"</span>,
+                    <span class="str">"price"</span>: <span class="num">699.99</span>
+                },
+                {
+                    <span class="str">"name"</span>: <span class="str">"Headphones"</span>,
+                    <span class="str">"price"</span>: <span class="num">199.99</span>
+                }
+            ]
+        )
+    ]
+):
+    <span class="kw">return</span> item</pre>
+      </div>
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p>Examples appear in the <strong>/docs</strong> Swagger UI interface. Click "Try it out" and your example data is pre-filled, making testing super easy for API consumers.</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "12. Extra Data Types",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">12</div>
+        <h2>Extra Data Types</h2>
+      </div>
+      <p>Beyond basic types like <code>str</code>, <code>int</code>, <code>float</code>, FastAPI supports many special types that auto-validate and convert.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>
+<span class="imp">from</span> <span class="cls">pydantic</span> <span class="imp">import</span> <span class="cls">BaseModel</span>
+<span class="imp">from</span> <span class="cls">datetime</span> <span class="imp">import</span> <span class="cls">datetime</span>, <span class="cls">date</span>, <span class="cls">time</span>, <span class="cls">timedelta</span>
+<span class="imp">from</span> <span class="cls">uuid</span> <span class="imp">import</span> <span class="cls">UUID</span>
+<span class="imp">import</span> <span class="cls">decimal</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="kw">class</span> <span class="cls">Event</span>(<span class="cls">BaseModel</span>):
+    event_id: <span class="cls">UUID</span>               <span class="cm"># e.g. "a8098c1a-f86e-11da-bd1a-00112444be1e"</span>
+    start_date: <span class="cls">date</span>             <span class="cm"># "2024-01-15"</span>
+    start_time: <span class="cls">datetime</span>         <span class="cm"># "2024-01-15T10:30:00"</span>
+    duration: <span class="cls">timedelta</span>          <span class="cm"># 3600 (seconds) or "PT1H"</span>
+    repeat_at: <span class="cls">time</span>              <span class="cm"># "10:30:00"</span>
+    price: <span class="cls">decimal</span>.<span class="cls">Decimal</span>       <span class="cm"># precise decimal, e.g. 19.99</span>
+
+<span class="dec">@app.post</span>(<span class="str">"/events/"</span>)
+<span class="kw">def</span> <span class="fn">create_event</span>(event: <span class="cls">Event</span>):
+    <span class="cm"># FastAPI automatically converts to Python objects!</span>
+    <span class="cm"># event.start_date is a Python date object</span>
+    <span class="cm"># event.event_id is a Python UUID object</span>
+    <span class="kw">return</span> event</pre>
+      </div>
+      <h3>All supported special types</h3>
+      <table>
+        <tr><th>Type</th><th>Input format</th><th>Python type</th></tr>
+        <tr><td><code>UUID</code></td><td>"6ba7b810-9dad-..."</td><td>uuid.UUID</td></tr>
+        <tr><td><code>datetime</code></td><td>"2024-01-15T10:30:00"</td><td>datetime.datetime</td></tr>
+        <tr><td><code>date</code></td><td>"2024-01-15"</td><td>datetime.date</td></tr>
+        <tr><td><code>time</code></td><td>"10:30:00"</td><td>datetime.time</td></tr>
+        <tr><td><code>timedelta</code></td><td>3600 (seconds)</td><td>datetime.timedelta</td></tr>
+        <tr><td><code>Decimal</code></td><td>"19.99"</td><td>decimal.Decimal</td></tr>
+        <tr><td><code>bytes</code></td><td>base64 string</td><td>bytes</td></tr>
+      </table>
+    </div>`
+  },
+  {
+    title: "13. Cookie Parameters",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">13</div>
+        <h2>Cookie Parameters</h2>
+      </div>
+      <p>Cookies are small pieces of data stored in the user's browser and sent with every request. Use <code>Cookie()</code> to read them.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">Cookie</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="dec">@app.get</span>(<span class="str">"/items/"</span>)
+<span class="kw">def</span> <span class="fn">read_items</span>(
+    session_token: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="cls">Cookie</span>(default=<span class="kw">None</span>)
+):
+    <span class="kw">if</span> session_token:
+        <span class="kw">return</span> {<span class="str">"session"</span>: session_token, <span class="str">"logged_in"</span>: <span class="kw">True</span>}
+    <span class="kw">return</span> {<span class="str">"logged_in"</span>: <span class="kw">False</span>}
+
+<span class="cm"># Set a cookie in a response</span>
+<span class="imp">from</span> <span class="cls">fastapi</span>.<span class="cls">responses</span> <span class="imp">import</span> <span class="cls">JSONResponse</span>
+
+<span class="dec">@app.post</span>(<span class="str">"/login"</span>)
+<span class="kw">def</span> <span class="fn">login</span>():
+    response = <span class="cls">JSONResponse</span>(content={<span class="str">"message"</span>: <span class="str">"Logged in!"</span>})
+    response.set_cookie(
+        key=<span class="str">"session_token"</span>,
+        value=<span class="str">"abc123xyz"</span>,
+        httponly=<span class="kw">True</span>,   <span class="cm"># JS can't access it (more secure)</span>
+        secure=<span class="kw">True</span>,     <span class="cm"># only sent over HTTPS</span>
+        max_age=<span class="num">3600</span>     <span class="cm"># expires in 1 hour</span>
+    )
+    <span class="kw">return</span> response</pre>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-icon">ℹ️</div>
+        <p>Cookie parameter names use underscores in Python (<code>session_token</code>) but FastAPI will look for the actual cookie name you specify. Cookie names in browsers often use hyphens.</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "14. Header Parameters",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">14</div>
+        <h2>Header Parameters</h2>
+      </div>
+      <p>HTTP headers carry extra information in requests (like authentication tokens, content type, user agent, etc.). Use <code>Header()</code> to read them.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">Header</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>, <span class="cls">List</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="dec">@app.get</span>(<span class="str">"/items/"</span>)
+<span class="kw">def</span> <span class="fn">read_items</span>(
+    user_agent: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="cls">Header</span>(default=<span class="kw">None</span>),
+    x_token: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="cls">Header</span>(default=<span class="kw">None</span>)
+):
+    <span class="cm"># FastAPI auto-converts "user-agent" header → user_agent param</span>
+    <span class="kw">return</span> {
+        <span class="str">"User-Agent"</span>: user_agent,
+        <span class="str">"X-Token"</span>: x_token
+    }
+
+<span class="cm"># Header that can have multiple values</span>
+<span class="dec">@app.get</span>(<span class="str">"/multi-header/"</span>)
+<span class="kw">def</span> <span class="fn">multi_header</span>(
+    x_token: <span class="cls">Optional</span>[<span class="cls">List</span>[<span class="cls">str</span>]] = <span class="cls">Header</span>(default=<span class="kw">None</span>)
+):
+    <span class="kw">return</span> {<span class="str">"X-Token values"</span>: x_token}</pre>
+      </div>
+      <h3>Key points</h3>
+      <table>
+        <tr><th>HTTP Header</th><th>Python param name</th><th>Why?</th></tr>
+        <tr><td>User-Agent</td><td>user_agent</td><td>Hyphens → underscores (auto)</td></tr>
+        <tr><td>X-Token</td><td>x_token</td><td>Hyphens → underscores (auto)</td></tr>
+        <tr><td>Content-Type</td><td>content_type</td><td>Hyphens → underscores (auto)</td></tr>
+      </table>
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p>FastAPI automatically converts <code>user_agent</code> (Python style) to <code>User-Agent</code> (HTTP style). This is because Python doesn't allow hyphens in variable names.</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "15. Cookie & Header Models",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">15</div>
+        <h2>Cookie &amp; Header Parameter Models</h2>
+      </div>
+      <p>Just like query parameter models, you can group cookies and headers into Pydantic models for cleaner code.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">Cookie</span>, <span class="cls">Header</span>
+<span class="imp">from</span> <span class="cls">pydantic</span> <span class="imp">import</span> <span class="cls">BaseModel</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>, <span class="cls">Annotated</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># Cookie Model</span>
+<span class="kw">class</span> <span class="cls">Cookies</span>(<span class="cls">BaseModel</span>):
+    session_id: <span class="cls">str</span>
+    fatigue_warning_banner: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="kw">None</span>
+    googler_reader: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="kw">None</span>
+
+<span class="dec">@app.get</span>(<span class="str">"/items/"</span>)
+<span class="kw">def</span> <span class="fn">read_items</span>(
+    cookies: <span class="cls">Annotated</span>[<span class="cls">Cookies</span>, <span class="cls">Cookie</span>()]
+):
+    <span class="kw">return</span> cookies
+
+<span class="cm"># Header Model</span>
+<span class="kw">class</span> <span class="cls">CommonHeaders</span>(<span class="cls">BaseModel</span>):
+    host: <span class="cls">str</span>
+    save_data: <span class="cls">bool</span>
+    if_modified_since: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="kw">None</span>
+    traceparent: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="kw">None</span>
+
+<span class="dec">@app.get</span>(<span class="str">"/headers/"</span>)
+<span class="kw">def</span> <span class="fn">read_headers</span>(
+    headers: <span class="cls">Annotated</span>[<span class="cls">CommonHeaders</span>, <span class="cls">Header</span>()]
+):
+    <span class="kw">return</span> headers</pre>
+      </div>
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p>Grouping into models makes your code self-documenting and allows you to reuse the same set of headers/cookies across multiple endpoints.</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "16. Response Model",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">16</div>
+        <h2>Response Model — Return Type</h2>
+      </div>
+      <p>Control exactly what data gets sent back to the client. You can filter out sensitive fields (like passwords) using response models.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>
+<span class="imp">from</span> <span class="cls">pydantic</span> <span class="imp">import</span> <span class="cls">BaseModel</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># Input model (includes password)</span>
+<span class="kw">class</span> <span class="cls">UserIn</span>(<span class="cls">BaseModel</span>):
+    username: <span class="cls">str</span>
+    password: <span class="cls">str</span>
+    email: <span class="cls">str</span>
+    full_name: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="kw">None</span>
+
+<span class="cm"># Output model (NO password!)</span>
+<span class="kw">class</span> <span class="cls">UserOut</span>(<span class="cls">BaseModel</span>):
+    username: <span class="cls">str</span>
+    email: <span class="cls">str</span>
+    full_name: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="kw">None</span>
+
+<span class="cm"># response_model filters the output — password never returned!</span>
+<span class="dec">@app.post</span>(<span class="str">"/users/"</span>, response_model=<span class="cls">UserOut</span>)
+<span class="kw">def</span> <span class="fn">create_user</span>(user: <span class="cls">UserIn</span>):
+    <span class="cm"># Even if we return the full user (with password),</span>
+    <span class="cm"># FastAPI will filter it to only return UserOut fields</span>
+    <span class="kw">return</span> user
+
+<span class="cm"># Using return type annotation (Python 3.9+)</span>
+<span class="dec">@app.get</span>(<span class="str">"/me"</span>)
+<span class="kw">def</span> <span class="fn">get_me</span>() -> <span class="cls">UserOut</span>:
+    <span class="kw">return</span> {<span class="str">"username"</span>: <span class="str">"johndoe"</span>, <span class="str">"email"</span>: <span class="str">"john@example.com"</span>}
+
+<span class="cm"># Exclude default/None values from response</span>
+<span class="dec">@app.get</span>(<span class="str">"/items/"</span>, response_model=<span class="cls">UserOut</span>, response_model_exclude_none=<span class="kw">True</span>)
+<span class="kw">def</span> <span class="fn">get_items</span>():
+    <span class="kw">return</span> {<span class="str">"username"</span>: <span class="str">"admin"</span>, <span class="str">"email"</span>: <span class="str">"admin@site.com"</span>}</pre>
+      </div>
+      <div class="callout callout-warn">
+        <div class="callout-icon">⚠️</div>
+        <p><strong>Never return passwords or sensitive data!</strong> Always use separate input/output models. The <code>response_model</code> acts as a filter — even if you accidentally return extra data, it won't reach the client.</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "17. Extra Models",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">17</div>
+        <h2>Extra Models</h2>
+      </div>
+      <p>In real apps, you often need different versions of the same model for different purposes. This pattern is called having multiple models.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>
+<span class="imp">from</span> <span class="cls">pydantic</span> <span class="imp">import</span> <span class="cls">BaseModel</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>, <span class="cls">Union</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># Base model with common fields</span>
+<span class="kw">class</span> <span class="cls">UserBase</span>(<span class="cls">BaseModel</span>):
+    username: <span class="cls">str</span>
+    email: <span class="cls">str</span>
+    full_name: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="kw">None</span>
+
+<span class="cm"># Input: includes password</span>
+<span class="kw">class</span> <span class="cls">UserCreate</span>(<span class="cls">UserBase</span>):
+    password: <span class="cls">str</span>
+
+<span class="cm"># Output: includes ID, no password</span>
+<span class="kw">class</span> <span class="cls">UserPublic</span>(<span class="cls">UserBase</span>):
+    id: <span class="cls">int</span>
+
+<span class="cm"># Internal: hashed password for database storage</span>
+<span class="kw">class</span> <span class="cls">UserInDB</span>(<span class="cls">UserBase</span>):
+    hashed_password: <span class="cls">str</span>
+
+<span class="kw">def</span> <span class="fn">fake_hash</span>(password: <span class="cls">str</span>) -> <span class="cls">str</span>:
+    <span class="kw">return</span> <span class="str">"hashed_"</span> + password
+
+<span class="dec">@app.post</span>(<span class="str">"/users/"</span>, response_model=<span class="cls">UserPublic</span>)
+<span class="kw">def</span> <span class="fn">create_user</span>(user: <span class="cls">UserCreate</span>):
+    user_dict = user.model_dump()
+    hashed = fake_hash(user_dict.pop(<span class="str">"password"</span>))
+    db_user = <span class="cls">UserInDB</span>(**user_dict, hashed_password=hashed, id=<span class="num">1</span>)
+    <span class="kw">return</span> db_user  <span class="cm"># filtered by response_model to UserPublic</span>
+
+<span class="cm"># Return different model types</span>
+<span class="dec">@app.get</span>(<span class="str">"/items/{item_id}"</span>, response_model=<span class="cls">Union</span>[<span class="cls">UserPublic</span>, <span class="cls">UserBase</span>])
+<span class="kw">def</span> <span class="fn">get_item</span>(item_id: <span class="cls">int</span>):
+    <span class="kw">pass</span></pre>
+      </div>
+      <h3>Model strategy diagram</h3>
+      <div class="flow" style="flex-direction:column;align-items:flex-start;gap:8px">
+        <div class="flow-box" style="background:rgba(0,212,255,0.1);border-color:var(--accent)">UserCreate (input) — username + email + password</div>
+        <div class="flow-arrow" style="padding:0 0 0 16px">↓ hash password, assign ID</div>
+        <div class="flow-box" style="background:rgba(124,77,255,0.1);border-color:var(--accent2)">UserInDB (internal) — username + email + hashed_password + id</div>
+        <div class="flow-arrow" style="padding:0 0 0 16px">↓ filter with response_model</div>
+        <div class="flow-box" style="background:rgba(0,255,148,0.1);border-color:var(--accent3)">UserPublic (output) — username + email + id (NO password!)</div>
+      </div>
+    </div>`
+  },
+  {
+    title: "18. Response Status Code",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">18</div>
+        <h2>Response Status Codes</h2>
+      </div>
+      <p>HTTP status codes tell the client what happened. Set them with <code>status_code</code> in the decorator.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">status</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># 201 Created — when a new resource is created</span>
+<span class="dec">@app.post</span>(<span class="str">"/items/"</span>, status_code=<span class="num">201</span>)
+<span class="kw">def</span> <span class="fn">create_item</span>(name: <span class="cls">str</span>):
+    <span class="kw">return</span> {<span class="str">"name"</span>: name}
+
+<span class="cm"># Using constants from status module (more readable!)</span>
+<span class="dec">@app.post</span>(<span class="str">"/users/"</span>, status_code=<span class="cls">status</span>.HTTP_201_CREATED)
+<span class="kw">def</span> <span class="fn">create_user</span>(username: <span class="cls">str</span>):
+    <span class="kw">return</span> {<span class="str">"username"</span>: username}
+
+<span class="cm"># 204 No Content — nothing to return (delete operations)</span>
+<span class="dec">@app.delete</span>(<span class="str">"/items/{item_id}"</span>, status_code=<span class="cls">status</span>.HTTP_204_NO_CONTENT)
+<span class="kw">def</span> <span class="fn">delete_item</span>(item_id: <span class="cls">int</span>):
+    <span class="kw">pass</span>  <span class="cm"># returns nothing</span></pre>
+      </div>
+      <h3>Common HTTP status codes</h3>
+      <table>
+        <tr><th>Code</th><th>Name</th><th>When to use</th></tr>
+        <tr><td>200</td><td>OK</td><td>Default — success</td></tr>
+        <tr><td>201</td><td>Created</td><td>New resource created (POST)</td></tr>
+        <tr><td>204</td><td>No Content</td><td>Success, nothing returned (DELETE)</td></tr>
+        <tr><td>400</td><td>Bad Request</td><td>Client sent invalid data</td></tr>
+        <tr><td>401</td><td>Unauthorized</td><td>Authentication required</td></tr>
+        <tr><td>403</td><td>Forbidden</td><td>No permission</td></tr>
+        <tr><td>404</td><td>Not Found</td><td>Resource doesn't exist</td></tr>
+        <tr><td>422</td><td>Unprocessable Entity</td><td>Validation failed (auto by FastAPI)</td></tr>
+        <tr><td>500</td><td>Server Error</td><td>Something went wrong on the server</td></tr>
+      </table>
+    </div>`
+  },
+  {
+    title: "19. Form Data",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">19</div>
+        <h2>Form Data</h2>
+      </div>
+      <p>HTML forms send data differently than JSON. Use <code>Form()</code> to receive form-encoded data (like from a login form).</p>
+      <div class="install-box">pip install python-multipart</div>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">Form</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># Typical login form</span>
+<span class="dec">@app.post</span>(<span class="str">"/login"</span>)
+<span class="kw">def</span> <span class="fn">login</span>(
+    username: <span class="cls">str</span> = <span class="cls">Form</span>(),
+    password: <span class="cls">str</span> = <span class="cls">Form</span>()
+):
+    <span class="kw">return</span> {<span class="str">"username"</span>: username}
+
+<span class="cm"># Form with optional field and validation</span>
+<span class="dec">@app.post</span>(<span class="str">"/register"</span>)
+<span class="kw">def</span> <span class="fn">register</span>(
+    username: <span class="cls">str</span> = <span class="cls">Form</span>(min_length=<span class="num">3</span>, max_length=<span class="num">20</span>),
+    email: <span class="cls">str</span> = <span class="cls">Form</span>(),
+    password: <span class="cls">str</span> = <span class="cls">Form</span>(min_length=<span class="num">8</span>)
+):
+    <span class="kw">return</span> {<span class="str">"registered"</span>: username}</pre>
+      </div>
+      <div class="callout callout-warn">
+        <div class="callout-icon">⚠️</div>
+        <p>You <strong>cannot</strong> mix <code>Form()</code> and JSON body in the same endpoint. An endpoint can use form data OR JSON body, not both.</p>
+      </div>
+      <h3>Form vs JSON</h3>
+      <table>
+        <tr><th>Form Data</th><th>JSON Body</th></tr>
+        <tr><td>Content-Type: application/x-www-form-urlencoded</td><td>Content-Type: application/json</td></tr>
+        <tr><td>From HTML &lt;form&gt; tags</td><td>From fetch/axios/etc.</td></tr>
+        <tr><td>Use Form()</td><td>Use BaseModel or Body()</td></tr>
+      </table>
+    </div>`
+  },
+  {
+    title: "20. Form Models",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">20</div>
+        <h2>Form Models</h2>
+      </div>
+      <p>Like query parameter models, group multiple form fields into a single Pydantic model.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">Form</span>
+<span class="imp">from</span> <span class="cls">pydantic</span> <span class="imp">import</span> <span class="cls">BaseModel</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Annotated</span>, <span class="cls">Optional</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="kw">class</span> <span class="cls">LoginForm</span>(<span class="cls">BaseModel</span>):
+    username: <span class="cls">str</span>
+    password: <span class="cls">str</span>
+    remember_me: <span class="cls">bool</span> = <span class="kw">False</span>
+
+<span class="dec">@app.post</span>(<span class="str">"/login"</span>)
+<span class="kw">def</span> <span class="fn">login</span>(
+    form_data: <span class="cls">Annotated</span>[<span class="cls">LoginForm</span>, <span class="cls">Form</span>()]
+):
+    <span class="kw">return</span> {
+        <span class="str">"username"</span>: form_data.username,
+        <span class="str">"remember"</span>: form_data.remember_me
+    }</pre>
+      </div>
+    </div>`
+  },
+  {
+    title: "21. Request Files",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">21</div>
+        <h2>Request Files</h2>
+      </div>
+      <p>Allow users to upload files to your API using <code>File()</code> or <code>UploadFile</code>.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">File</span>, <span class="cls">UploadFile</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">List</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># Simple file upload (stores all in memory as bytes)</span>
+<span class="dec">@app.post</span>(<span class="str">"/upload-simple/"</span>)
+<span class="kw">def</span> <span class="fn">upload_simple</span>(data: <span class="cls">bytes</span> = <span class="cls">File</span>()):
+    <span class="kw">return</span> {<span class="str">"file_size"</span>: <span class="cls">len</span>(data)}
+
+<span class="cm"># Better: UploadFile (streams large files efficiently)</span>
+<span class="dec">@app.post</span>(<span class="str">"/upload/"</span>)
+<span class="kw">async def</span> <span class="fn">upload_file</span>(file: <span class="cls">UploadFile</span>):
+    contents = <span class="kw">await</span> file.read()  <span class="cm"># read file contents</span>
+    <span class="kw">return</span> {
+        <span class="str">"filename"</span>: file.filename,
+        <span class="str">"content_type"</span>: file.content_type,
+        <span class="str">"size"</span>: <span class="cls">len</span>(contents)
+    }
+
+<span class="cm"># Multiple file uploads</span>
+<span class="dec">@app.post</span>(<span class="str">"/upload-multiple/"</span>)
+<span class="kw">async def</span> <span class="fn">upload_multiple</span>(files: <span class="cls">List</span>[<span class="cls">UploadFile</span>]):
+    <span class="kw">return</span> [
+        {<span class="str">"filename"</span>: f.filename, <span class="str">"size"</span>: <span class="cls">len</span>(<span class="kw">await</span> f.read())}
+        <span class="kw">for</span> f <span class="kw">in</span> files
+    ]
+
+<span class="cm"># Save uploaded file to disk</span>
+<span class="dec">@app.post</span>(<span class="str">"/save/"</span>)
+<span class="kw">async def</span> <span class="fn">save_file</span>(file: <span class="cls">UploadFile</span>):
+    <span class="kw">with</span> <span class="cls">open</span>(<span class="str">f"uploads/{file.filename}"</span>, <span class="str">"wb"</span>) <span class="kw">as</span> f:
+        content = <span class="kw">await</span> file.read()
+        f.write(content)
+    <span class="kw">return</span> {<span class="str">"saved"</span>: file.filename}</pre>
+      </div>
+      <h3>File vs UploadFile</h3>
+      <table>
+        <tr><th>Type</th><th>Storage</th><th>Best for</th></tr>
+        <tr><td><code>bytes</code> + File()</td><td>All in memory</td><td>Small files</td></tr>
+        <tr><td><code>UploadFile</code></td><td>Streamed (memory-efficient)</td><td>Large files</td></tr>
+      </table>
+    </div>`
+  },
+  {
+    title: "22. Forms and Files",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">22</div>
+        <h2>Request Forms and Files Together</h2>
+      </div>
+      <p>You can combine file uploads with form fields in the same request.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">File</span>, <span class="cls">Form</span>, <span class="cls">UploadFile</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># Upload avatar with user info</span>
+<span class="dec">@app.post</span>(<span class="str">"/users/create"</span>)
+<span class="kw">async def</span> <span class="fn">create_user_with_avatar</span>(
+    username: <span class="cls">str</span> = <span class="cls">Form</span>(),
+    email: <span class="cls">str</span> = <span class="cls">Form</span>(),
+    bio: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="cls">Form</span>(default=<span class="kw">None</span>),
+    avatar: <span class="cls">UploadFile</span> = <span class="cls">File</span>(default=<span class="kw">None</span>)  <span class="cm"># optional file</span>
+):
+    result = {<span class="str">"username"</span>: username, <span class="str">"email"</span>: email}
+    <span class="kw">if</span> avatar:
+        result[<span class="str">"avatar"</span>] = avatar.filename
+    <span class="kw">return</span> result</pre>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-icon">ℹ️</div>
+        <p>This sends data as <code>multipart/form-data</code> — the format used when an HTML form has <code>enctype="multipart/form-data"</code>. Both form fields and files travel in the same request.</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "23. Handling Errors",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">23</div>
+        <h2>Handling Errors</h2>
+      </div>
+      <p>When something goes wrong, raise an <code>HTTPException</code> to send an error response with the right status code and message.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">HTTPException</span>, <span class="cls">Request</span>
+<span class="imp">from</span> <span class="cls">fastapi</span>.<span class="cls">responses</span> <span class="imp">import</span> <span class="cls">JSONResponse</span>
+<span class="imp">from</span> <span class="cls">fastapi</span>.<span class="cls">exception_handlers</span> <span class="imp">import</span> <span class="cls">http_exception_handler</span>
+
+app = <span class="cls">FastAPI</span>()
+
+fake_db = {<span class="num">1</span>: <span class="str">"Apple"</span>, <span class="num">2</span>: <span class="str">"Banana"</span>}
+
+<span class="dec">@app.get</span>(<span class="str">"/items/{item_id}"</span>)
+<span class="kw">def</span> <span class="fn">get_item</span>(item_id: <span class="cls">int</span>):
+    <span class="kw">if</span> item_id <span class="kw">not in</span> fake_db:
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(
+            status_code=<span class="num">404</span>,
+            detail=<span class="str">f"Item {item_id} not found"</span>
+        )
+    <span class="kw">return</span> {<span class="str">"item"</span>: fake_db[item_id]}
+
+<span class="cm"># Adding custom headers to error</span>
+<span class="dec">@app.get</span>(<span class="str">"/secure/{item_id}"</span>)
+<span class="kw">def</span> <span class="fn">secure_item</span>(item_id: <span class="cls">int</span>, token: <span class="cls">str</span>):
+    <span class="kw">if</span> token != <span class="str">"secret"</span>:
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(
+            status_code=<span class="num">401</span>,
+            detail=<span class="str">"Invalid token"</span>,
+            headers={<span class="str">"WWW-Authenticate"</span>: <span class="str">"Bearer"</span>}
+        )
+    <span class="kw">return</span> {<span class="str">"item"</span>: fake_db.get(item_id)}
+
+<span class="cm"># Custom exception class</span>
+<span class="kw">class</span> <span class="cls">ItemNotFoundError</span>(<span class="cls">Exception</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, item_id: <span class="cls">int</span>):
+        self.item_id = item_id
+
+<span class="cm"># Custom exception handler</span>
+<span class="dec">@app.exception_handler</span>(<span class="cls">ItemNotFoundError</span>)
+<span class="kw">async def</span> <span class="fn">item_exception_handler</span>(request: <span class="cls">Request</span>, exc: <span class="cls">ItemNotFoundError</span>):
+    <span class="kw">return</span> <span class="cls">JSONResponse</span>(
+        status_code=<span class="num">404</span>,
+        content={<span class="str">"message"</span>: <span class="str">f"Item {exc.item_id} not found"</span>}
+    )</pre>
+      </div>
+      <h3>Error response format</h3>
+      <div class="response-box">
+        <div class="response-status status-404">404 Not Found</div>
+        <pre>{
+  <span class="str">"detail"</span>: <span class="str">"Item 99 not found"</span>
+}</pre>
+      </div>
+    </div>`
+  },
+  {
+    title: "24. Path Operation Config",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">24</div>
+        <h2>Path Operation Configuration</h2>
+      </div>
+      <p>Add metadata to your endpoints — used in the auto-generated API docs.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">status</span>
+<span class="imp">from</span> <span class="cls">pydantic</span> <span class="imp">import</span> <span class="cls">BaseModel</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="kw">class</span> <span class="cls">Item</span>(<span class="cls">BaseModel</span>):
+    name: <span class="cls">str</span>
+
+<span class="dec">@app.post</span>(
+    <span class="str">"/items/"</span>,
+    response_model=<span class="cls">Item</span>,
+    status_code=<span class="cls">status</span>.HTTP_201_CREATED,
+    tags=[<span class="str">"items"</span>],           <span class="cm"># groups endpoint in docs</span>
+    summary=<span class="str">"Create an item"</span>, <span class="cm"># short description</span>
+    description=<span class="str">"""
+    Create an item with the following info:
+
+    - **name**: The item name (required)
+    
+    Returns the created item.
+    """</span>,
+    response_description=<span class="str">"The created item"</span>,
+    deprecated=<span class="kw">False</span>          <span class="cm"># mark as deprecated if True</span>
+)
+<span class="kw">def</span> <span class="fn">create_item</span>(item: <span class="cls">Item</span>):
+    <span class="kw">return</span> item
+
+<span class="cm"># Using docstrings for description</span>
+<span class="dec">@app.get</span>(<span class="str">"/users/"</span>, tags=[<span class="str">"users"</span>])
+<span class="kw">def</span> <span class="fn">list_users</span>():
+    <span class="str">"""
+    Get all users.
+    
+    Returns a list of all registered users in the system.
+    Supports pagination through query parameters.
+    """</span>
+    <span class="kw">return</span> []</pre>
+      </div>
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p>Use <code>tags</code> to organize endpoints into groups in the docs. All endpoints with <code>tags=["items"]</code> will be grouped together under an "items" section.</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "25. JSON Encoder",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">25</div>
+        <h2>JSON Compatible Encoder</h2>
+      </div>
+      <p>Use <code>jsonable_encoder()</code> to convert Python objects (like datetime, UUID, Pydantic models) into JSON-serializable types before saving to a database.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>
+<span class="imp">from</span> <span class="cls">fastapi</span>.<span class="cls">encoders</span> <span class="imp">import</span> <span class="cls">jsonable_encoder</span>
+<span class="imp">from</span> <span class="cls">pydantic</span> <span class="imp">import</span> <span class="cls">BaseModel</span>
+<span class="imp">from</span> <span class="cls">datetime</span> <span class="imp">import</span> <span class="cls">datetime</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="kw">class</span> <span class="cls">Item</span>(<span class="cls">BaseModel</span>):
+    name: <span class="cls">str</span>
+    timestamp: <span class="cls">datetime</span>
+
+<span class="cm"># Simulated database (only stores JSON-compatible data)</span>
+fake_db = {}
+
+<span class="dec">@app.put</span>(<span class="str">"/items/{item_id}"</span>)
+<span class="kw">def</span> <span class="fn">update_item</span>(item_id: <span class="cls">str</span>, item: <span class="cls">Item</span>):
+    <span class="cm"># Convert Pydantic model to dict with JSON-safe values</span>
+    <span class="cm"># datetime becomes "2024-01-15T10:30:00" (string)</span>
+    json_compatible = <span class="cls">jsonable_encoder</span>(item)
+    
+    <span class="cm"># Now safe to store in a JSON-only database</span>
+    fake_db[item_id] = json_compatible
+    
+    <span class="kw">return</span> json_compatible
+
+<span class="cm"># Example: without jsonable_encoder, datetime would fail to serialize
+# json.dumps({"time": datetime.now()})  ← ERROR!
+# json.dumps(jsonable_encoder({"time": datetime.now()}))  ← OK: "2024-01-15T10:30:00"</span></pre>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-icon">ℹ️</div>
+        <p><code>jsonable_encoder</code> is like a magic converter: it turns any Python object into something that <code>json.dumps()</code> can handle. Useful when storing to databases like MongoDB or Redis that store JSON.</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "26. Body - Updates",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">26</div>
+        <h2>Body — Updates</h2>
+      </div>
+      <p>Handling full updates (PUT) and partial updates (PATCH) require different approaches.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">HTTPException</span>
+<span class="imp">from</span> <span class="cls">fastapi</span>.<span class="cls">encoders</span> <span class="imp">import</span> <span class="cls">jsonable_encoder</span>
+<span class="imp">from</span> <span class="cls">pydantic</span> <span class="imp">import</span> <span class="cls">BaseModel</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="kw">class</span> <span class="cls">Item</span>(<span class="cls">BaseModel</span>):
+    name: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="kw">None</span>
+    price: <span class="cls">Optional</span>[<span class="cls">float</span>] = <span class="kw">None</span>
+    description: <span class="cls">Optional</span>[<span class="cls">str</span>] = <span class="kw">None</span>
+
+db = {<span class="num">1</span>: {<span class="str">"name"</span>: <span class="str">"Laptop"</span>, <span class="str">"price"</span>: <span class="num">999.0</span>, <span class="str">"description"</span>: <span class="str">"Old laptop"</span>}}
+
+<span class="cm"># PUT — full replacement</span>
+<span class="dec">@app.put</span>(<span class="str">"/items/{item_id}"</span>)
+<span class="kw">def</span> <span class="fn">update_item</span>(item_id: <span class="cls">int</span>, item: <span class="cls">Item</span>):
+    <span class="kw">if</span> item_id <span class="kw">not in</span> db:
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(status_code=<span class="num">404</span>, detail=<span class="str">"Item not found"</span>)
+    update_data = <span class="cls">jsonable_encoder</span>(item)
+    db[item_id] = update_data  <span class="cm"># replaces entirely</span>
+    <span class="kw">return</span> db[item_id]
+
+<span class="cm"># PATCH — partial update</span>
+<span class="dec">@app.patch</span>(<span class="str">"/items/{item_id}"</span>)
+<span class="kw">def</span> <span class="fn">partial_update</span>(item_id: <span class="cls">int</span>, item: <span class="cls">Item</span>):
+    <span class="kw">if</span> item_id <span class="kw">not in</span> db:
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(status_code=<span class="num">404</span>, detail=<span class="str">"Item not found"</span>)
+    
+    stored = <span class="cls">Item</span>(**db[item_id])
+    
+    <span class="cm"># exclude_unset=True: only fields that were sent</span>
+    update_data = item.model_dump(exclude_unset=<span class="kw">True</span>)
+    
+    updated = stored.model_copy(update=update_data)
+    db[item_id] = <span class="cls">jsonable_encoder</span>(updated)
+    <span class="kw">return</span> db[item_id]</pre>
+      </div>
+      <h3>PUT vs PATCH</h3>
+      <table>
+        <tr><th>Method</th><th>Behavior</th><th>Send</th></tr>
+        <tr><td>PUT</td><td>Replace entire resource</td><td>All fields</td></tr>
+        <tr><td>PATCH</td><td>Update only specified fields</td><td>Only changed fields</td></tr>
+      </table>
+    </div>`
+  },
+  {
+    title: "27. Dependencies",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">27</div>
+        <h2>Dependencies</h2>
+      </div>
+      <p>Dependencies are reusable pieces of logic you inject into your endpoints. Perfect for authentication checks, database connections, and shared logic.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">Depends</span>, <span class="cls">HTTPException</span>, <span class="cls">Header</span>
+<span class="imp">from</span> <span class="cls">typing</span> <span class="imp">import</span> <span class="cls">Optional</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># Dependency: shared query parameters</span>
+<span class="kw">def</span> <span class="fn">common_params</span>(skip: <span class="cls">int</span> = <span class="num">0</span>, limit: <span class="cls">int</span> = <span class="num">100</span>):
+    <span class="kw">return</span> {<span class="str">"skip"</span>: skip, <span class="str">"limit"</span>: limit}
+
+<span class="dec">@app.get</span>(<span class="str">"/items/"</span>)
+<span class="kw">def</span> <span class="fn">read_items</span>(commons: <span class="cls">dict</span> = <span class="cls">Depends</span>(common_params)):
+    <span class="kw">return</span> {<span class="str">"skip"</span>: commons[<span class="str">"skip"</span>], <span class="str">"limit"</span>: commons[<span class="str">"limit"</span>]}
+
+<span class="dec">@app.get</span>(<span class="str">"/users/"</span>)
+<span class="kw">def</span> <span class="fn">read_users</span>(commons: <span class="cls">dict</span> = <span class="cls">Depends</span>(common_params)):
+    <span class="kw">return</span> commons  <span class="cm"># reusing same dependency!</span>
+
+<span class="cm"># Dependency with security check</span>
+<span class="kw">def</span> <span class="fn">verify_token</span>(x_token: <span class="cls">str</span> = <span class="cls">Header</span>()):
+    <span class="kw">if</span> x_token != <span class="str">"valid-token"</span>:
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(status_code=<span class="num">400</span>, detail=<span class="str">"Invalid token"</span>)
+    <span class="kw">return</span> x_token
+
+<span class="dec">@app.get</span>(<span class="str">"/secure/"</span>)
+<span class="kw">def</span> <span class="fn">secure_endpoint</span>(token: <span class="cls">str</span> = <span class="cls">Depends</span>(verify_token)):
+    <span class="kw">return</span> {<span class="str">"token"</span>: token, <span class="str">"access"</span>: <span class="str">"granted"</span>}
+
+<span class="cm"># Database session dependency (with yield)</span>
+<span class="kw">def</span> <span class="fn">get_db</span>():
+    db = {<span class="str">"connected"</span>: <span class="kw">True</span>}  <span class="cm"># replace with real DB session</span>
+    <span class="kw">try</span>:
+        <span class="kw">yield</span> db         <span class="cm"># give DB to endpoint</span>
+    <span class="kw">finally</span>:
+        <span class="kw">pass</span>             <span class="cm"># close DB connection here</span>
+
+<span class="dec">@app.get</span>(<span class="str">"/db-items/"</span>)
+<span class="kw">def</span> <span class="fn">read_db_items</span>(db = <span class="cls">Depends</span>(get_db)):
+    <span class="kw">return</span> {<span class="str">"db"</span>: db}</pre>
+      </div>
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p>Dependencies are the FastAPI way to write DRY (Don't Repeat Yourself) code. Instead of copying the same auth check into every endpoint, write it once as a dependency and inject it wherever needed.</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "28. Security",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">28</div>
+        <h2>Security — OAuth2 &amp; JWT</h2>
+      </div>
+      <p>FastAPI provides built-in security utilities. Here's a practical JWT-based authentication system.</p>
+      <div class="install-box">pip install python-jose[cryptography] passlib[bcrypt]</div>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">Depends</span>, <span class="cls">HTTPException</span>, <span class="cls">status</span>
+<span class="imp">from</span> <span class="cls">fastapi</span>.<span class="cls">security</span> <span class="imp">import</span> <span class="cls">OAuth2PasswordBearer</span>, <span class="cls">OAuth2PasswordRequestForm</span>
+<span class="imp">from</span> <span class="cls">jose</span> <span class="imp">import</span> <span class="cls">JWTError</span>, <span class="cls">jwt</span>
+<span class="imp">from</span> <span class="cls">passlib</span>.<span class="cls">context</span> <span class="imp">import</span> <span class="cls">CryptContext</span>
+<span class="imp">from</span> <span class="cls">datetime</span> <span class="imp">import</span> <span class="cls">datetime</span>, <span class="cls">timedelta</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># Configuration</span>
+SECRET_KEY = <span class="str">"your-secret-key-keep-this-safe"</span>
+ALGORITHM = <span class="str">"HS256"</span>
+ACCESS_TOKEN_EXPIRE_MINUTES = <span class="num">30</span>
+
+<span class="cm"># Password hashing</span>
+pwd_context = <span class="cls">CryptContext</span>(schemes=[<span class="str">"bcrypt"</span>])
+oauth2_scheme = <span class="cls">OAuth2PasswordBearer</span>(tokenUrl=<span class="str">"token"</span>)
+
+<span class="cm"># Fake user database</span>
+fake_users = {
+    <span class="str">"johndoe"</span>: {
+        <span class="str">"username"</span>: <span class="str">"johndoe"</span>,
+        <span class="str">"hashed_password"</span>: pwd_context.hash(<span class="str">"secret"</span>)
+    }
+}
+
+<span class="kw">def</span> <span class="fn">create_token</span>(data: <span class="cls">dict</span>) -> <span class="cls">str</span>:
+    to_encode = data.copy()
+    expire = <span class="cls">datetime</span>.utcnow() + <span class="cls">timedelta</span>(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode[<span class="str">"exp"</span>] = expire
+    <span class="kw">return</span> jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+<span class="cm"># Login endpoint — returns token</span>
+<span class="dec">@app.post</span>(<span class="str">"/token"</span>)
+<span class="kw">def</span> <span class="fn">login</span>(form: <span class="cls">OAuth2PasswordRequestForm</span> = <span class="cls">Depends</span>()):
+    user = fake_users.get(form.username)
+    <span class="kw">if not</span> user <span class="kw">or not</span> pwd_context.verify(form.password, user[<span class="str">"hashed_password"</span>]):
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(status_code=<span class="num">401</span>, detail=<span class="str">"Wrong credentials"</span>)
+    token = <span class="fn">create_token</span>({<span class="str">"sub"</span>: form.username})
+    <span class="kw">return</span> {<span class="str">"access_token"</span>: token, <span class="str">"token_type"</span>: <span class="str">"bearer"</span>}
+
+<span class="cm"># Protected endpoint</span>
+<span class="dec">@app.get</span>(<span class="str">"/me"</span>)
+<span class="kw">def</span> <span class="fn">get_me</span>(token: <span class="cls">str</span> = <span class="cls">Depends</span>(oauth2_scheme)):
+    <span class="kw">try</span>:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get(<span class="str">"sub"</span>)
+        <span class="kw">return</span> {<span class="str">"username"</span>: username}
+    <span class="kw">except</span> <span class="cls">JWTError</span>:
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(status_code=<span class="num">401</span>, detail=<span class="str">"Invalid token"</span>)</pre>
+      </div>
+    </div>`
+  },
+  {
+    title: "29. Middleware",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">29</div>
+        <h2>Middleware</h2>
+      </div>
+      <p>Middleware runs before and after every request. Use it for logging, timing, authentication, modifying responses, etc.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">Request</span>
+<span class="imp">import</span> <span class="cls">time</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># Middleware = runs on EVERY request</span>
+<span class="dec">@app.middleware</span>(<span class="str">"http"</span>)
+<span class="kw">async def</span> <span class="fn">add_timing</span>(request: <span class="cls">Request</span>, call_next):
+    start = time.time()
+    
+    <span class="cm"># Before request: pre-processing</span>
+    print(<span class="str">f"Request: {request.method} {request.url}"</span>)
+    
+    response = <span class="kw">await</span> call_next(request)  <span class="cm"># run the endpoint</span>
+    
+    <span class="cm"># After request: add custom header</span>
+    duration = time.time() - start
+    response.headers[<span class="str">"X-Process-Time"</span>] = <span class="cls">str</span>(duration)
+    
+    <span class="kw">return</span> response
+
+<span class="cm"># Another middleware: simple authentication</span>
+<span class="dec">@app.middleware</span>(<span class="str">"http"</span>)
+<span class="kw">async def</span> <span class="fn">verify_api_key</span>(request: <span class="cls">Request</span>, call_next):
+    <span class="cm"># Skip auth for public endpoints</span>
+    <span class="kw">if</span> request.url.path <span class="kw">in</span> [<span class="str">"/"</span>, <span class="str">"/docs"</span>, <span class="str">"/health"</span>]:
+        <span class="kw">return</span> <span class="kw">await</span> call_next(request)
+    
+    api_key = request.headers.get(<span class="str">"X-API-Key"</span>)
+    <span class="kw">if</span> api_key != <span class="str">"my-secret-key"</span>:
+        <span class="imp">from</span> <span class="cls">fastapi</span>.<span class="cls">responses</span> <span class="imp">import</span> <span class="cls">JSONResponse</span>
+        <span class="kw">return</span> <span class="cls">JSONResponse</span>(
+            status_code=<span class="num">403</span>,
+            content={<span class="str">"detail"</span>: <span class="str">"Invalid API key"</span>}
+        )
+    <span class="kw">return</span> <span class="kw">await</span> call_next(request)
+
+<span class="dec">@app.get</span>(<span class="str">"/"</span>)
+<span class="kw">def</span> <span class="fn">root</span>():
+    <span class="kw">return</span> {<span class="str">"hello"</span>: <span class="str">"world"</span>}</pre>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-icon">ℹ️</div>
+        <p>Middleware runs in reverse order — the last one added runs first. Think of them as layers of an onion around your request.</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "30. CORS",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">30</div>
+        <h2>CORS — Cross-Origin Resource Sharing</h2>
+      </div>
+      <p>CORS is a security feature that controls which websites can call your API. If your frontend is on <code>localhost:3000</code> and API on <code>localhost:8000</code>, you need CORS.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>
+<span class="imp">from</span> <span class="cls">fastapi</span>.<span class="cls">middleware</span>.<span class="cls">cors</span> <span class="imp">import</span> <span class="cls">CORSMiddleware</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># List of allowed frontend origins</span>
+origins = [
+    <span class="str">"http://localhost:3000"</span>,    <span class="cm"># React dev server</span>
+    <span class="str">"http://localhost:5173"</span>,    <span class="cm"># Vite dev server</span>
+    <span class="str">"https://myapp.com"</span>,        <span class="cm"># Production frontend</span>
+]
+
+app.add_middleware(
+    <span class="cls">CORSMiddleware</span>,
+    allow_origins=origins,         <span class="cm"># which origins can call</span>
+    allow_credentials=<span class="kw">True</span>,       <span class="cm"># allow cookies</span>
+    allow_methods=[<span class="str">"*"</span>],          <span class="cm"># all methods (GET, POST, etc.)</span>
+    allow_headers=[<span class="str">"*"</span>],          <span class="cm"># all headers</span>
+)
+
+<span class="dec">@app.get</span>(<span class="str">"/"</span>)
+<span class="kw">def</span> <span class="fn">root</span>():
+    <span class="kw">return</span> {<span class="str">"message"</span>: <span class="str">"API is accessible from allowed origins"</span>}
+
+<span class="cm"># For development only — allow ALL origins (NOT for production!)</span>
+<span class="cm"># allow_origins=["*"]</span></pre>
+      </div>
+      <div class="callout callout-warn">
+        <div class="callout-icon">⚠️</div>
+        <p>Never use <code>allow_origins=["*"]</code> with <code>allow_credentials=True</code> in production. This is a security risk. Always specify exact origins in production.</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "31. SQL Databases",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">31</div>
+        <h2>SQL (Relational) Databases</h2>
+      </div>
+      <p>Connect FastAPI to a real database using SQLAlchemy (the most popular Python ORM).</p>
+      <div class="install-box">pip install sqlalchemy</div>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">database.py + models.py + main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="cm"># ── database.py ──────────────────────────────</span>
+<span class="imp">from</span> <span class="cls">sqlalchemy</span> <span class="imp">import</span> <span class="fn">create_engine</span>
+<span class="imp">from</span> <span class="cls">sqlalchemy</span>.<span class="cls">ext</span>.<span class="cls">declarative</span> <span class="imp">import</span> <span class="fn">declarative_base</span>
+<span class="imp">from</span> <span class="cls">sqlalchemy</span>.<span class="cls">orm</span> <span class="imp">import</span> <span class="fn">sessionmaker</span>
+
+DATABASE_URL = <span class="str">"sqlite:///./test.db"</span>  <span class="cm"># file-based SQLite</span>
+
+engine = <span class="fn">create_engine</span>(DATABASE_URL, connect_args={<span class="str">"check_same_thread"</span>: <span class="kw">False</span>})
+SessionLocal = <span class="fn">sessionmaker</span>(autocommit=<span class="kw">False</span>, autoflush=<span class="kw">False</span>, bind=engine)
+Base = <span class="fn">declarative_base</span>()
+
+<span class="cm"># ── models.py ────────────────────────────────</span>
+<span class="imp">from</span> <span class="cls">sqlalchemy</span> <span class="imp">import</span> <span class="cls">Column</span>, <span class="cls">Integer</span>, <span class="cls">String</span>, <span class="cls">Boolean</span>
+
+<span class="kw">class</span> <span class="cls">User</span>(<span class="cls">Base</span>):
+    __tablename__ = <span class="str">"users"</span>
+    id = <span class="cls">Column</span>(<span class="cls">Integer</span>, primary_key=<span class="kw">True</span>)
+    email = <span class="cls">Column</span>(<span class="cls">String</span>, unique=<span class="kw">True</span>)
+    hashed_pw = <span class="cls">Column</span>(<span class="cls">String</span>)
+    is_active = <span class="cls">Column</span>(<span class="cls">Boolean</span>, default=<span class="kw">True</span>)
+
+<span class="cm"># ── main.py ──────────────────────────────────</span>
+<span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">Depends</span>, <span class="cls">HTTPException</span>
+<span class="imp">from</span> <span class="cls">sqlalchemy</span>.<span class="cls">orm</span> <span class="imp">import</span> <span class="cls">Session</span>
+
+app = <span class="cls">FastAPI</span>()
+Base.metadata.create_all(bind=engine)  <span class="cm"># create tables</span>
+
+<span class="kw">def</span> <span class="fn">get_db</span>():
+    db = <span class="cls">SessionLocal</span>()
+    <span class="kw">try</span>:
+        <span class="kw">yield</span> db
+    <span class="kw">finally</span>:
+        db.close()
+
+<span class="dec">@app.post</span>(<span class="str">"/users/"</span>)
+<span class="kw">def</span> <span class="fn">create_user</span>(email: <span class="cls">str</span>, db: <span class="cls">Session</span> = <span class="cls">Depends</span>(get_db)):
+    user = <span class="cls">User</span>(email=email, hashed_pw=<span class="str">"fakehash"</span>)
+    db.add(user); db.commit(); db.refresh(user)
+    <span class="kw">return</span> user
+
+<span class="dec">@app.get</span>(<span class="str">"/users/"</span>)
+<span class="kw">def</span> <span class="fn">list_users</span>(db: <span class="cls">Session</span> = <span class="cls">Depends</span>(get_db)):
+    <span class="kw">return</span> db.query(<span class="cls">User</span>).all()</pre>
+      </div>
+    </div>`
+  },
+  {
+    title: "32. Bigger Applications",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">32</div>
+        <h2>Bigger Applications — Multiple Files</h2>
+      </div>
+      <p>Split your app into multiple files using <code>APIRouter</code>. Each file handles one domain (users, items, etc.).</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">text</span>
+          <span class="code-filename">Project Structure</span>
+        </div>
+        <pre>my_app/
+├── main.py
+├── routers/
+│   ├── users.py
+│   └── items.py
+└── models.py</pre>
+      </div>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">routers/items.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">APIRouter</span>, <span class="cls">Depends</span>
+
+<span class="cm"># Create a router (like a mini-app)</span>
+router = <span class="cls">APIRouter</span>(
+    prefix=<span class="str">"/items"</span>,        <span class="cm"># all routes start with /items</span>
+    tags=[<span class="str">"items"</span>],         <span class="cm"># group in docs</span>
+)
+
+<span class="dec">@router.get</span>(<span class="str">"/"</span>)         <span class="cm"># → GET /items/</span>
+<span class="kw">def</span> <span class="fn">list_items</span>():
+    <span class="kw">return</span> [<span class="str">"item1"</span>, <span class="str">"item2"</span>]
+
+<span class="dec">@router.post</span>(<span class="str">"/"</span>)       <span class="cm"># → POST /items/</span>
+<span class="kw">def</span> <span class="fn">create_item</span>(name: <span class="cls">str</span>):
+    <span class="kw">return</span> {<span class="str">"name"</span>: name}</pre>
+      </div>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>
+<span class="imp">from</span> <span class="cls">routers</span> <span class="imp">import</span> items, users  <span class="cm"># import routers</span>
+
+app = <span class="cls">FastAPI</span>()
+
+app.include_router(items.router)  <span class="cm"># register items router</span>
+app.include_router(users.router)  <span class="cm"># register users router
+
+# Now you have:
+# GET /items/
+# POST /items/
+# GET /users/
+# POST /users/  etc.</span></pre>
+      </div>
+    </div>`
+  },
+  {
+    title: "33. Background Tasks",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">33</div>
+        <h2>Background Tasks</h2>
+      </div>
+      <p>Run slow operations (sending emails, processing files) in the background without making the user wait for the response.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>, <span class="cls">BackgroundTasks</span>
+<span class="imp">import</span> <span class="cls">time</span>
+
+app = <span class="cls">FastAPI</span>()
+
+<span class="cm"># This is slow — we don't want user to wait</span>
+<span class="kw">def</span> <span class="fn">send_email</span>(email: <span class="cls">str</span>, message: <span class="cls">str</span>):
+    time.sleep(<span class="num">5</span>)  <span class="cm"># simulate slow email sending</span>
+    print(<span class="str">f"Email sent to {email}: {message}"</span>)
+
+<span class="kw">def</span> <span class="fn">write_log</span>(message: <span class="cls">str</span>):
+    <span class="kw">with</span> <span class="cls">open</span>(<span class="str">"log.txt"</span>, <span class="str">"a"</span>) <span class="kw">as</span> f:
+        f.write(message + <span class="str">"\n"</span>)
+
+<span class="dec">@app.post</span>(<span class="str">"/register"</span>)
+<span class="kw">def</span> <span class="fn">register</span>(email: <span class="cls">str</span>, background_tasks: <span class="cls">BackgroundTasks</span>):
+    <span class="cm"># Add tasks to run AFTER response is sent</span>
+    background_tasks.add_task(send_email, email, <span class="str">"Welcome!"</span>)
+    background_tasks.add_task(write_log, <span class="str">f"New user: {email}"</span>)
+    
+    <span class="cm"># Response sent immediately — email sends after</span>
+    <span class="kw">return</span> {<span class="str">"message"</span>: <span class="str">"Registered! Check your email."</span>}
+
+<span class="cm"># Background tasks also work in dependencies</span>
+<span class="kw">def</span> <span class="fn">log_query</span>(q: <span class="cls">str</span>, bg: <span class="cls">BackgroundTasks</span>):
+    bg.add_task(write_log, <span class="str">f"Query: {q}"</span>)
+    <span class="kw">return</span> q</pre>
+      </div>
+      <div class="callout callout-tip">
+        <div class="callout-icon">💡</div>
+        <p>Background tasks are great for: sending emails/SMS, generating thumbnails, writing logs, sending notifications, updating caches — anything that shouldn't block the response.</p>
+      </div>
+    </div>`
+  },
+  {
+    title: "34. Testing",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">34</div>
+        <h2>Testing</h2>
+      </div>
+      <p>FastAPI provides a <code>TestClient</code> that lets you test your API like a real HTTP client, without running a server.</p>
+      <div class="install-box">pip install httpx pytest</div>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">test_main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span>.<span class="cls">testclient</span> <span class="imp">import</span> <span class="cls">TestClient</span>
+<span class="imp">from</span> <span class="cls">main</span> <span class="imp">import</span> app   <span class="cm"># import your FastAPI app</span>
+
+<span class="cm"># Create test client</span>
+client = <span class="cls">TestClient</span>(app)
+
+<span class="cm"># Test GET request</span>
+<span class="kw">def</span> <span class="fn">test_read_root</span>():
+    response = client.get(<span class="str">"/"</span>)
+    assert response.status_code == <span class="num">200</span>
+    assert response.json() == {<span class="str">"message"</span>: <span class="str">"Hello World"</span>}
+
+<span class="cm"># Test with path parameter</span>
+<span class="kw">def</span> <span class="fn">test_get_item</span>():
+    response = client.get(<span class="str">"/items/1"</span>)
+    assert response.status_code == <span class="num">200</span>
+    data = response.json()
+    assert <span class="str">"item_id"</span> in data
+
+<span class="cm"># Test 404</span>
+<span class="kw">def</span> <span class="fn">test_item_not_found</span>():
+    response = client.get(<span class="str">"/items/9999"</span>)
+    assert response.status_code == <span class="num">404</span>
+
+<span class="cm"># Test POST with body</span>
+<span class="kw">def</span> <span class="fn">test_create_item</span>():
+    response = client.post(
+        <span class="str">"/items/"</span>,
+        json={<span class="str">"name"</span>: <span class="str">"Laptop"</span>, <span class="str">"price"</span>: <span class="num">999.99</span>}
+    )
+    assert response.status_code == <span class="num">201</span>
+    assert response.json()[<span class="str">"name"</span>] == <span class="str">"Laptop"</span>
+
+<span class="cm"># Test with headers</span>
+<span class="kw">def</span> <span class="fn">test_with_auth</span>():
+    response = client.get(
+        <span class="str">"/secure/"</span>,
+        headers={<span class="str">"X-Token"</span>: <span class="str">"valid-token"</span>}
+    )
+    assert response.status_code == <span class="num">200</span></pre>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash</span><span class="code-filename">Run tests</span></div>
+        <pre><span class="cm"># Run all tests</span>
+$ pytest
+
+<span class="cm"># Run with verbose output</span>
+$ pytest -v
+
+<span class="cm"># Run specific test</span>
+$ pytest test_main.py::test_create_item</pre>
+      </div>
+    </div>`
+  },
+  {
+    title: "35. Static Files & Metadata",
+    content: `<div class="section">
+      <div class="section-header">
+        <div class="section-num">35</div>
+        <h2>Static Files, Metadata &amp; Debugging</h2>
+      </div>
+      <p>Serve static files, customize your API documentation, and debug your app.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">python</span>
+          <span class="code-filename">main.py</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="imp">from</span> <span class="cls">fastapi</span> <span class="imp">import</span> <span class="cls">FastAPI</span>
+<span class="imp">from</span> <span class="cls">fastapi</span>.<span class="cls">staticfiles</span> <span class="imp">import</span> <span class="cls">StaticFiles</span>
+
+<span class="cm"># Customize API metadata</span>
+app = <span class="cls">FastAPI</span>(
+    title=<span class="str">"My Awesome API"</span>,
+    description=<span class="str">"""
+    ## Welcome to My API
+
+    This API does amazing things. You can:
+    * **Create items** - Create new items
+    * **Read items** - Read existing items
+    """</span>,
+    version=<span class="str">"1.0.0"</span>,
+    terms_of_service=<span class="str">"https://mysite.com/terms"</span>,
+    contact={
+        <span class="str">"name"</span>: <span class="str">"Support"</span>,
+        <span class="str">"email"</span>: <span class="str">"support@mysite.com"</span>
+    },
+    license_info={<span class="str">"name"</span>: <span class="str">"MIT"</span>},
+    docs_url=<span class="str">"/docs"</span>,       <span class="cm"># Swagger UI path</span>
+    redoc_url=<span class="str">"/redoc"</span>,     <span class="cm"># ReDoc path</span>
+    openapi_url=<span class="str">"/openapi.json"</span>
+)
+
+<span class="cm"># Serve static files from "static" folder</span>
+<span class="cm"># Files at: /static/image.jpg, /static/style.css, etc.</span>
+app.mount(<span class="str">"/static"</span>, <span class="cls">StaticFiles</span>(directory=<span class="str">"static"</span>), name=<span class="str">"static"</span>)
+
+<span class="dec">@app.get</span>(<span class="str">"/"</span>)
+<span class="kw">def</span> <span class="fn">root</span>():
+    <span class="kw">return</span> {<span class="str">"message"</span>: <span class="str">"Check /docs for API documentation!"</span>}
+
+<span class="cm"># ── Debugging ────────────────────────────────
+# Run with debugger in VS Code or PyCharm:
+# Add this at the bottom to run directly</span>
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    <span class="imp">import</span> <span class="cls">uvicorn</span>
+    uvicorn.run(<span class="str">"main:app"</span>, host=<span class="str">"0.0.0.0"</span>, port=<span class="num">8000</span>, reload=<span class="kw">True</span>)</pre>
+      </div>
+      <h3>🎉 You've completed the FastAPI tutorial!</h3>
+      <p>You now know everything to build production-ready APIs. Here's a quick recap of the journey:</p>
+      <table>
+        <tr><th>Category</th><th>Topics covered</th></tr>
+        <tr><td>Basics</td><td>First Steps, Path Params, Query Params, Request Body</td></tr>
+        <tr><td>Validation</td><td>Query/Path/Field validations, Nested Models, Extra Types</td></tr>
+        <tr><td>I/O</td><td>Forms, File Uploads, Cookies, Headers</td></tr>
+        <tr><td>Responses</td><td>Response Models, Status Codes, Extra Models</td></tr>
+        <tr><td>Advanced</td><td>Dependencies, Security, Middleware, CORS, SQL</td></tr>
+        <tr><td>Production</td><td>Multiple Files, Background Tasks, Testing, Static Files</td></tr>
+      </table>
+      <div class="callout callout-tip">
+        <div class="callout-icon">🚀</div>
+        <p>Next steps: Explore <strong>async/await</strong> for high performance, <strong>WebSockets</strong> for real-time apps, and deploy your API on <strong>Railway, Render, or AWS</strong>.</p>
+      </div>
+    </div>`
+  }
+];
+
+// Build TOC
+const toc = document.getElementById('toc');
+topics.forEach((t, i) => {
+  const div = document.createElement('div');
+  div.className = 'toc-item' + (i === 0 ? ' active' : '');
+  div.innerHTML = `<span class="toc-num">${i === 0 ? '★' : String(i).padStart(2,'0')}</span>${t.title}`;
+  div.onclick = () => loadTopic(i);
+  toc.appendChild(div);
+});
+
+let current = 0;
+
+function loadTopic(index) {
+  current = index;
+  const content = document.getElementById('content');
+  content.innerHTML = topics[index].content;
+  
+  // Update TOC
+  document.querySelectorAll('.toc-item').forEach((el, i) => {
+    el.classList.toggle('active', i === index);
+  });
+
+  // Update breadcrumb
+  document.getElementById('current-topic').textContent = topics[index].title;
+  
+  // Update progress
+  const pct = Math.round((index / (topics.length - 1)) * 100);
+  document.getElementById('progress').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = `${index} / ${topics.length - 1}`;
+  
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+  // Update nav buttons
+  document.getElementById('prev-btn').style.opacity = index === 0 ? '0.3' : '1';
+  document.getElementById('next-btn').style.opacity = index === topics.length - 1 ? '0.3' : '1';
+  
+  // Close sidebar on mobile
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+function navigate(dir) {
+  const next = current + dir;
+  if (next >= 0 && next < topics.length) loadTopic(next);
+}
+
+// Search
+document.getElementById('search-input').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase();
+  document.querySelectorAll('.toc-item').forEach((el, i) => {
+    el.style.display = !q || topics[i].title.toLowerCase().includes(q) ? 'flex' : 'none';
+  });
+});
+
+// Back to top
+window.addEventListener('scroll', () => {
+  document.getElementById('back-top').classList.toggle('visible', window.scrollY > 300);
+});
+
+// Copy code
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// Init
+loadTopic(0);
+</script>
+</body>
+</html>
